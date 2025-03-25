@@ -18,8 +18,89 @@ document.addEventListener("DOMContentLoaded", function() {
     const toggleAdvancedBtn = document.getElementById("toggleAdvanced");
     const advancedOptionsDiv = document.getElementById("advancedOptions");
     const chartContainer = document.getElementById("chart");
+    const currencySelect = document.getElementById("currency");
     
     let chart = null;
+    
+    // Définir les symboles et codes de devise
+    const currencies = {
+        EUR: { symbol: "€", locale: "fr-FR" },
+        USD: { symbol: "$", locale: "en-US" },
+        GBP: { symbol: "£", locale: "en-GB" },
+        JPY: { symbol: "¥", locale: "ja-JP" },
+        CHF: { symbol: "CHF", locale: "de-CH" },
+        CAD: { symbol: "CAD", locale: "en-CA" },
+        AUD: { symbol: "AUD", locale: "en-AU" },
+        XOF: { symbol: "FCFA", locale: "fr-FR" },
+        XAF: { symbol: "FCFA", locale: "fr-FR" },
+        ZAR: { symbol: "ZAR", locale: "en-ZA" },
+        NGN: { symbol: "₦", locale: "en-NG" },
+        EGP: { symbol: "E£", locale: "ar-EG" },
+        GHS: { symbol: "GH₵", locale: "en-GH" },
+        KES: { symbol: "KSh", locale: "en-KE" },
+        MAD: { symbol: "MAD", locale: "ar-MA" },
+        DZD: { symbol: "DZD", locale: "ar-DZ" },
+        TND: { symbol: "TND", locale: "ar-TN" },
+        MUR: { symbol: "Rs", locale: "en-MU" },
+        CVE: { symbol: "CVE", locale: "pt-CV" },
+        GMD: { symbol: "GMD", locale: "en-GM" },
+        GNF: { symbol: "GNF", locale: "fr-GN" },
+        SLL: { symbol: "SLL", locale: "en-SL" },
+        LRD: { symbol: "LRD", locale: "en-LR" },
+        ETB: { symbol: "ETB", locale: "am-ET" },
+        DJF: { symbol: "DJF", locale: "fr-DJ" },
+        SOS: { symbol: "SOS", locale: "so-SO" },
+        UGX: { symbol: "UGX", locale: "en-UG" },
+        TZS: { symbol: "TZS", locale: "en-TZ" },
+        RWF: { symbol: "RWF", locale: "fr-RW" },
+        BIF: { symbol: "BIF", locale: "fr-BI" },
+        MGA: { symbol: "MGA", locale: "fr-MG" },
+        MZN: { symbol: "MZN", locale: "pt-MZ" },
+        ZMW: { symbol: "ZMW", locale: "en-ZM" },
+        BWP: { symbol: "BWP", locale: "en-BW" },
+        NAD: { symbol: "NAD", locale: "en-NA" },
+        SZL: { symbol: "SZL", locale: "en-SZ" },
+        LSL: { symbol: "LSL", locale: "en-LS" },
+        SCR: { symbol: "SCR", locale: "en-SC" },
+        SDG: { symbol: "SDG", locale: "ar-SD" },
+        SSP: { symbol: "SSP", locale: "en-SS" },
+        AOA: { symbol: "AOA", locale: "pt-AO" },
+        CDF: { symbol: "CDF", locale: "fr-CD" }
+    };
+    
+    // Devise active
+    let activeCurrency = "EUR";
+    
+    // Gérer le changement de devise
+    currencySelect.addEventListener("change", function() {
+        activeCurrency = this.value;
+        updateCurrencyLabels();
+    });
+    
+    // Mettre à jour les labels de devise
+    function updateCurrencyLabels() {
+        const currencySymbol = currencies[activeCurrency].symbol;
+        
+        // Mettre à jour les libellés des montants d'entrée
+        document.querySelectorAll("label[for='initialAmount'], label[for='monthlyContribution']").forEach(label => {
+            const baseText = label.textContent.split("(")[0].trim();
+            label.textContent = `${baseText}`;
+        });
+        
+        // Mettre à jour les symboles de devise dans les résultats
+        if (resultsDiv.style.display !== "none") {
+            totalInvestedSpan.textContent = formatCurrency(parseFloat(totalInvestedSpan.textContent.replace(/[^\d.-]/g, "")));
+            interestEarnedSpan.textContent = formatCurrency(parseFloat(interestEarnedSpan.textContent.replace(/[^\d.-]/g, "")));
+            finalValueSpan.textContent = formatCurrency(parseFloat(finalValueSpan.textContent.replace(/[^\d.-]/g, "")));
+            afterTaxValueSpan.textContent = formatCurrency(parseFloat(afterTaxValueSpan.textContent.replace(/[^\d.-]/g, "")));
+        }
+        
+        // Mettre à jour l'axe Y du graphique si nécessaire
+        if (chart) {
+            chart.options.scales.y.title.text = `Valeur (${currencySymbol})`;
+            chart.update();
+        }
+    }
     
     // Afficher/masquer les options avancées
     toggleAdvancedBtn.addEventListener("click", function() {
@@ -45,7 +126,10 @@ document.addEventListener("DOMContentLoaded", function() {
         annualContributionIncreaseInput.value = "0";
         compoundFrequencySelect.value = "12";
         taxRateInput.value = "30";
+        currencySelect.value = "EUR";
+        activeCurrency = "EUR";
         
+        updateCurrencyLabels();
         resultsDiv.style.display = "none";
         
         if (chart) {
@@ -152,6 +236,8 @@ document.addEventListener("DOMContentLoaded", function() {
         chartContainer.innerHTML = '';
         chartContainer.appendChild(canvas);
         
+        const currencySymbol = currencies[activeCurrency].symbol;
+        
         // Créer le graphique
         chart = new Chart(canvas, {
             type: 'line',
@@ -206,7 +292,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     y: {
                         title: {
                             display: true,
-                            text: 'Valeur (€)'
+                            text: `Valeur (${currencySymbol})`
                         },
                         ticks: {
                             callback: function(value) {
@@ -220,11 +306,15 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     
     function formatCurrency(value, includeSymbol = true) {
-        const formatter = new Intl.NumberFormat('fr-FR', {
+        const currencyInfo = currencies[activeCurrency];
+        const formatter = new Intl.NumberFormat(currencyInfo.locale, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
         });
         
-        return formatter.format(Math.round(value)) + (includeSymbol ? ' €' : '');
+        return formatter.format(Math.round(value)) + (includeSymbol ? ` ${currencyInfo.symbol}` : '');
     }
+    
+    // Initialiser les labels de devise
+    updateCurrencyLabels();
 });
