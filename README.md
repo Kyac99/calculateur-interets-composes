@@ -2,6 +2,10 @@
 
 Un outil simple pour calculer l'évolution de vos placements avec intérêts composés, inspiré de Finary.
 
+## Accès en ligne
+
+Utilisez directement le calculateur en ligne à cette adresse : [https://kyac99.github.io/calculateur-interets-composes/](https://kyac99.github.io/calculateur-interets-composes/)
+
 ## Fonctionnalités
 
 - Calcul d'intérêts composés avec capital initial
@@ -11,9 +15,9 @@ Un outil simple pour calculer l'évolution de vos placements avec intérêts com
 - Prise en compte de la fiscalité
 - Visualisation graphique de l'évolution
 
-## Utilisation
+## Utilisation locale
 
-Ouvrez simplement le fichier `index.html` dans votre navigateur pour commencer à utiliser le calculateur.
+Vous pouvez également télécharger ce dépôt et ouvrir simplement le fichier `index.html` dans votre navigateur pour commencer à utiliser le calculateur localement.
 
 ## Technologie
 
