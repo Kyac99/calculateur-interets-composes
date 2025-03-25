@@ -49,6 +49,20 @@
             font-size: 16px;
         }
         
+        .input-with-select {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-with-select input {
+            flex: 3;
+        }
+        
+        .input-with-select select {
+            flex: 1;
+            min-width: 80px;
+        }
+        
         .button-group {
             display: flex;
             justify-content: space-between;
@@ -131,20 +145,101 @@
             margin-top: 10px;
             border-left: 4px solid #3498db;
         }
+
+        .currency-group {
+            margin-top: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .currency-group h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        /* Style pour les optgroups dans le select */
+        optgroup {
+            font-weight: bold;
+            color: #2c3e50;
+        }
     </style>
 </head>
 <body>
     <div class="calculator">
         <h1>Calculateur d'Intérêts Composés</h1>
         
-        <div class="form-group">
-            <label for="initialAmount">Capital initial (€)</label>
-            <input type="number" id="initialAmount" min="0" value="1000">
+        <div class="currency-group">
+            <h3>Sélectionner votre devise</h3>
+            <div class="form-group">
+                <select id="currency">
+                    <optgroup label="Devises principales">
+                        <option value="EUR" selected>Euro (€)</option>
+                        <option value="USD">Dollar américain ($)</option>
+                        <option value="GBP">Livre sterling (£)</option>
+                        <option value="JPY">Yen japonais (¥)</option>
+                        <option value="CHF">Franc suisse (CHF)</option>
+                        <option value="CAD">Dollar canadien (CAD)</option>
+                        <option value="AUD">Dollar australien (AUD)</option>
+                    </optgroup>
+                    <optgroup label="Devises africaines">
+                        <option value="XOF">Franc CFA - UEMOA (FCFA)</option>
+                        <option value="XAF">Franc CFA - CEMAC (FCFA)</option>
+                        <option value="ZAR">Rand sud-africain (ZAR)</option>
+                        <option value="NGN">Naira nigérian (₦)</option>
+                        <option value="EGP">Livre égyptienne (E£)</option>
+                        <option value="GHS">Cedi ghanéen (GH₵)</option>
+                        <option value="KES">Shilling kényan (KSh)</option>
+                        <option value="MAD">Dirham marocain (MAD)</option>
+                        <option value="DZD">Dinar algérien (DZD)</option>
+                        <option value="TND">Dinar tunisien (TND)</option>
+                        <option value="MUR">Roupie mauricienne (Rs)</option>
+                        <option value="CVE">Escudo cap-verdien (CVE)</option>
+                        <option value="GMD">Dalasi gambien (GMD)</option>
+                        <option value="GNF">Franc guinéen (GNF)</option>
+                        <option value="SLL">Leone sierra-léonais (SLL)</option>
+                        <option value="LRD">Dollar libérien (LRD)</option>
+                        <option value="ETB">Birr éthiopien (ETB)</option>
+                        <option value="DJF">Franc djiboutien (DJF)</option>
+                        <option value="SOS">Shilling somalien (SOS)</option>
+                        <option value="UGX">Shilling ougandais (UGX)</option>
+                        <option value="TZS">Shilling tanzanien (TZS)</option>
+                        <option value="RWF">Franc rwandais (RWF)</option>
+                        <option value="BIF">Franc burundais (BIF)</option>
+                        <option value="MGA">Ariary malgache (MGA)</option>
+                        <option value="MZN">Metical mozambicain (MZN)</option>
+                        <option value="ZMW">Kwacha zambien (ZMW)</option>
+                        <option value="BWP">Pula botswanais (BWP)</option>
+                        <option value="NAD">Dollar namibien (NAD)</option>
+                        <option value="SZL">Lilangeni swazi (SZL)</option>
+                        <option value="LSL">Loti lesothan (LSL)</option>
+                        <option value="SCR">Roupie seychelloise (SCR)</option>
+                        <option value="SDG">Livre soudanaise (SDG)</option>
+                        <option value="SSP">Livre sud-soudanaise (SSP)</option>
+                        <option value="AOA">Kwanza angolais (AOA)</option>
+                        <option value="CDF">Franc congolais (CDF)</option>
+                    </optgroup>
+                </select>
+            </div>
         </div>
         
         <div class="form-group">
-            <label for="monthlyContribution">Versement mensuel (€)</label>
-            <input type="number" id="monthlyContribution" min="0" value="100">
+            <label for="initialAmount">Capital initial</label>
+            <div class="input-with-select">
+                <input type="number" id="initialAmount" min="0" value="1000">
+                <div id="initialAmountCurrencySymbol" class="currency-symbol">€</div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="monthlyContribution">Versement mensuel</label>
+            <div class="input-with-select">
+                <input type="number" id="monthlyContribution" min="0" value="100">
+                <div id="monthlyContributionCurrencySymbol" class="currency-symbol">€</div>
+            </div>
         </div>
         
         <div class="form-group">
