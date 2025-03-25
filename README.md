@@ -14,6 +14,9 @@ Utilisez directement le calculateur en ligne à cette adresse : [https://kyac99.
 - Différentes fréquences de capitalisation
 - Prise en compte de la fiscalité
 - Visualisation graphique de l'évolution
+- Prise en charge de multiples devises :
+  - Devises principales (EUR, USD, GBP, JPY, CHF, CAD, AUD)
+  - Devises africaines (FCFA, Rand, Naira, et plus de 30 autres monnaies africaines)
 
 ## Utilisation locale
 
