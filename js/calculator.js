@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const advancedOptionsDiv = document.getElementById("advancedOptions");
     const chartContainer = document.getElementById("chart");
     const currencySelect = document.getElementById("currency");
+    const initialAmountCurrencySymbol = document.getElementById("initialAmountCurrencySymbol");
+    const monthlyContributionCurrencySymbol = document.getElementById("monthlyContributionCurrencySymbol");
     
     let chart = null;
     
@@ -81,11 +83,9 @@ document.addEventListener("DOMContentLoaded", function() {
     function updateCurrencyLabels() {
         const currencySymbol = currencies[activeCurrency].symbol;
         
-        // Mettre à jour les libellés des montants d'entrée
-        document.querySelectorAll("label[for='initialAmount'], label[for='monthlyContribution']").forEach(label => {
-            const baseText = label.textContent.split("(")[0].trim();
-            label.textContent = `${baseText}`;
-        });
+        // Mettre à jour les symboles dans les champs de saisie
+        initialAmountCurrencySymbol.textContent = currencySymbol;
+        monthlyContributionCurrencySymbol.textContent = currencySymbol;
         
         // Mettre à jour les symboles de devise dans les résultats
         if (resultsDiv.style.display !== "none") {
