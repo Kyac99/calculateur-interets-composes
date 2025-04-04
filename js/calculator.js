@@ -158,6 +158,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Nombre de périodes de capitalisation sur la durée totale
         const totalCompoundingPeriods = investmentPeriod * compoundFrequency;
         
+        // Nombre de contributions par période de capitalisation
+        const contributionsPerCompoundingPeriod = contributionFrequency / compoundFrequency;
+        
         let balance = initialAmount;
         let totalContributions = initialAmount;
         let currentContribution = monthlyContribution * (12 / contributionFrequency);
@@ -175,15 +178,33 @@ document.addEventListener("DOMContentLoaded", function() {
             const interest = balance * interestRatePerPeriod;
             balance += interest;
             
-            // Si c'est le moment d'ajouter une contribution
-            if (period % (compoundFrequency / contributionFrequency) === 0) {
+            // Gestion des versements en fonction de la fréquence
+            // Si on capitalise plus souvent qu'on ne verse (ex: capitalisation mensuelle, versements trimestriels)
+            if (contributionsPerCompoundingPeriod < 1) {
+                // On vérifie si c'est le moment de faire un versement
+                if (Math.round((period * contributionsPerCompoundingPeriod) % 1 * 10) / 10 === 0) {
+                    balance += currentContribution;
+                    totalContributions += currentContribution;
+                }
+            } 
+            // Si on verse plus souvent qu'on ne capitalise (ex: versements mensuels, capitalisation annuelle)
+            else if (contributionsPerCompoundingPeriod > 1) {
+                // Pour chaque versement dans cette période de capitalisation
+                const versements = Math.floor(contributionsPerCompoundingPeriod);
+                for (let i = 0; i < versements; i++) {
+                    balance += currentContribution;
+                    totalContributions += currentContribution;
+                }
+            }
+            // Si on verse à la même fréquence qu'on capitalise
+            else {
                 balance += currentContribution;
                 totalContributions += currentContribution;
-                
-                // Si c'est la fin d'une année, augmenter la contribution
-                if (period % compoundFrequency === 0) {
-                    currentContribution *= (1 + annualContributionIncrease);
-                }
+            }
+            
+            // Si c'est la fin d'une année, augmenter le montant des versements
+            if (period % compoundFrequency === 0 && annualContributionIncrease > 0) {
+                currentContribution *= (1 + annualContributionIncrease);
             }
             
             // Enregistrer les données annuelles pour le graphique
