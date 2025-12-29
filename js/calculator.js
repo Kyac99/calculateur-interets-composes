@@ -423,7 +423,89 @@ document.addEventListener("DOMContentLoaded", function() {
     // =============================================
     // CRÉATION DES GRAPHIQUES
     // =============================================
-   function createObjectiveChart(initialAmount, payment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
+   function createChart(yearlyData) {
+        if (chart) {
+            chart.destroy();
+        }
+        
+        const years = yearlyData.map(data => data.year);
+        const balances = yearlyData.map(data => data.balance);
+        const contributions = yearlyData.map(data => data.contributions);
+        const interests = yearlyData.map(data => data.interest);
+        
+        const canvas = document.createElement('canvas');
+        chartContainer.innerHTML = '';
+        chartContainer.appendChild(canvas);
+        
+        const currencySymbol = currencies[activeCurrency].symbol;
+        
+        chart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        label: 'Valeur totale',
+                        data: balances,
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Montants investis',
+                        data: contributions,
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Intérêts cumulés',
+                        data: interests,
+                        backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Années'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: `Valeur (${currencySymbol})`
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value, false);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createObjectiveChart(initialAmount, payment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
         if (chartObjective) {
             chartObjective.destroy();
         }
@@ -550,129 +632,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         title: { display: true, text: `Valeur (${currencySymbol})` },
                         ticks: {
                             callback: function(value) { return formatCurrency(value, false); }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    function createObjectiveChart(initialAmount, payment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
-        if (chartObjective) {
-            chartObjective.destroy();
-        }
-        
-        // Générer les données année par année
-        const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
-        
-        const periodsPerYear = compoundFrequency;
-        const ratePerPeriod = annualRate / periodsPerYear;
-        const contributionsPerYear = contributionFrequency;
-        const periodsBetweenContributions = periodsPerYear / contributionsPerYear;
-        
-        let balance = initialAmount;
-        let totalContributions = initialAmount;
-        
-        for (let year = 1; year <= years; year++) {
-            const startPeriod = (year - 1) * periodsPerYear + 1;
-            const endPeriod = year * periodsPerYear;
-            
-            for (let period = startPeriod; period <= endPeriod; period++) {
-                // Versements
-                if (periodsBetweenContributions >= 1) {
-                    if ((period - 1) % periodsBetweenContributions === 0) {
-                        balance += payment;
-                        totalContributions += payment;
-                    }
-                } else {
-                    const amountThisPeriod = payment * (contributionsPerYear / periodsPerYear);
-                    balance += amountThisPeriod;
-                    totalContributions += amountThisPeriod;
-                }
-                
-                // Intérêts
-                balance *= (1 + ratePerPeriod);
-            }
-            
-            yearlyData.push({
-                year: year,
-                balance: balance,
-                contributions: totalContributions,
-                interest: balance - totalContributions
-            });
-        }
-        
-        const yearsLabels = yearlyData.map(data => data.year);
-        const balances = yearlyData.map(data => data.balance);
-        const contributions = yearlyData.map(data => data.contributions);
-        const targetLine = yearlyData.map(() => targetAmount);
-        
-        const canvas = document.createElement('canvas');
-        chartObjectiveContainer.innerHTML = '';
-        chartObjectiveContainer.appendChild(canvas);
-        
-        const currencySymbol = currencies[activeCurrency].symbol;
-        
-        chartObjective = new Chart(canvas, {
-            type: 'line',
-            data: {
-                labels: yearsLabels,
-                datasets: [
-                    {
-                        label: 'Projection de croissance',
-                        data: balances,
-                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                        borderColor: 'rgba(52, 152, 219, 1)',
-                        borderWidth: 2,
-                        fill: true
-                    },
-                    {
-                        label: 'Montants investis',
-                        data: contributions,
-                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                        borderColor: 'rgba(46, 204, 113, 1)',
-                        borderWidth: 2,
-                        fill: true
-                    },
-                    {
-                        label: 'Objectif',
-                        data: targetLine,
-                        borderColor: 'rgba(231, 76, 60, 1)',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        fill: false,
-                        pointRadius: 0
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + formatCurrency(context.raw);
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Années'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: `Valeur (${currencySymbol})`
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return formatCurrency(value, false);
-                            }
                         }
                     }
                 }
