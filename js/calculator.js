@@ -235,45 +235,64 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
         
-        for (let period = 1; period <= totalPeriods; period++) {
-            // Déterminer dans quelle année on se trouve (1-indexed)
-            const currentYear = Math.ceil(period / periodsPerYear);
-            const periodInYear = ((period - 1) % periodsPerYear) + 1;
+        // Préparation des variables de temps
+        const totalMonths = investmentPeriod * 12; // On itère toujours en mois pour la précision
+        let accumulatedInterest = 0; // "Salle d'attente" pour les intérêts non encore capitalisés
+        
+        for (let month = 1; month <= totalMonths; month++) {
             
-            // Vérifier si on doit ajouter un versement cette période
-            // Calculer combien de périodes de capitalisation entre chaque versement
-            const periodsBetweenContributions = periodsPerYear / contributionsPerYear;
+            // --- 1. CALCUL DES INTÉRÊTS (Début de période) ---
+            // L'argent déjà présent génère des intérêts pour ce mois-ci.
+            // Note : On utilise le taux mensuel simple pour l'accumulation.
+            const monthlyRate = annualInterestRate / 12;
+            accumulatedInterest += balance * monthlyRate;
+        
+            // --- 2. CAPITALISATION (Est-ce le moment de verser les intérêts ?) ---
+            // Ex: Si capitalisation annuelle (fréquence 1), on verse tous les 12 mois.
+            const monthsPerCompounding = 12 / compoundFrequency;
             
-            // On verse au début de chaque période de versement
-            if (periodsBetweenContributions >= 1) {
-                // Si on capitalise plus souvent ou aussi souvent qu'on verse
-                if ((period - 1) % periodsBetweenContributions === 0) {
+            // On utilise Math.round pour éviter les bugs de float (ex: 2.99999)
+            if (month % Math.round(monthsPerCompounding) === 0) {
+                balance += accumulatedInterest;
+                accumulatedInterest = 0; // On vide la salle d'attente
+            }
+        
+            // --- 3. VERSEMENT (FIN DE PÉRIODE / Terme Échu) ---
+            // Le versement arrive APRES le calcul des intérêts du mois (logique salaire).
+            const monthsPerContribution = 12 / contributionFrequency;
+            
+            // Vérification : est-ce un mois de versement ?
+            // On gère aussi le cas rare où on verse plus d'une fois par mois
+            if (contributionFrequency >= 12) {
+                // Cas standard (Mensuel ou moins fréquent)
+                if (month % Math.round(monthsPerContribution) === 0) {
                     balance += currentContributionAmount;
                     totalContributions += currentContributionAmount;
                 }
             } else {
-                // Si on verse plus souvent qu'on capitalise (cas rare)
-                // On ajoute le montant proportionnel pour cette période
-                const contributionsThisPeriod = contributionsPerYear / periodsPerYear;
-                const amountThisPeriod = currentContributionAmount * contributionsThisPeriod;
-                balance += amountThisPeriod;
-                totalContributions += amountThisPeriod;
+                // Cas exotique (ex: Hebdomadaire simule sur base mensuelle)
+                // On lisse le montant annuel sur 12 mois
+                const monthlySmoothed = (currentContributionAmount * contributionFrequency) / 12;
+                balance += monthlySmoothed;
+                totalContributions += monthlySmoothed;
             }
-            
-            // Appliquer les intérêts pour cette période
-            balance *= (1 + ratePerPeriod);
-            
-            // Fin d'année: sauvegarder les données et augmenter les versements
-            if (period % periodsPerYear === 0) {
-                const totalInterest = balance - totalContributions;
+        
+            // --- 4. FIN D'ANNÉE (Sauvegarde & Augmentation) ---
+            if (month % 12 === 0) {
+                const currentYear = month / 12;
+                
+                // Pour le graphique, on affiche le Solde Réel + Intérêts latents
+                const displayBalance = balance + accumulatedInterest;
+                const totalInterest = displayBalance - totalContributions;
+        
                 yearlyData.push({
                     year: currentYear,
-                    balance: balance,
+                    balance: displayBalance,
                     contributions: totalContributions,
                     interest: totalInterest
                 });
-                
-                // Augmentation annuelle des versements
+        
+                // Augmentation annuelle des versements (indexée sur l'année civile)
                 if (annualContributionIncrease > 0) {
                     currentContributionAmount *= (1 + annualContributionIncrease);
                 }
