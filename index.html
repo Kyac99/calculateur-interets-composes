@@ -9,7 +9,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
@@ -27,6 +27,48 @@
             color: #2c3e50;
             text-align: center;
             margin-bottom: 30px;
+        }
+        
+        /* Onglets */
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background-color: #ecf0f1;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            transition: all 0.3s;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab-btn:last-child {
+            margin-right: 0;
+        }
+        
+        .tab-btn:hover {
+            background-color: #d5dbdb;
+        }
+        
+        .tab-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         .form-group {
@@ -47,6 +89,7 @@
             border-radius: 5px;
             background-color: #f9f9f9;
             font-size: 16px;
+            box-sizing: border-box;
         }
         
         .input-group {
@@ -57,7 +100,7 @@
         
         .input-group input {
             width: 100%;
-            padding-right: 50px; /* Espace pour le symbole */
+            padding-right: 50px;
         }
         
         .currency-symbol {
@@ -67,6 +110,24 @@
             color: #555;
             pointer-events: none;
             font-size: 16px;
+        }
+        
+        /* Groupe versement avec fréquence */
+        .contribution-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .contribution-group .form-group {
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 600px) {
+            .contribution-group {
+                grid-template-columns: 1fr;
+            }
         }
         
         .button-group {
@@ -126,12 +187,31 @@
             font-size: 18px;
         }
         
+        .result-highlight {
+            background-color: #27ae60;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .result-highlight .result-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .result-highlight .result-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
         .chart-container {
             height: 400px;
             margin-top: 30px;
         }
         
-        #toggleAdvanced {
+        #toggleAdvanced, #toggleAdvanced2 {
             background: none;
             border: none;
             color: #3498db;
@@ -143,7 +223,7 @@
             padding: 0;
         }
         
-        #advancedOptions {
+        #advancedOptions, #advancedOptions2 {
             display: none;
             background-color: #eaf2f8;
             border-radius: 5px;
@@ -167,10 +247,56 @@
             font-size: 16px;
         }
 
-        /* Style pour les optgroups dans le select */
         optgroup {
             font-weight: bold;
             color: #2c3e50;
+        }
+        
+        .frequency-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        /* Info box */
+        .info-box {
+            background-color: #e8f6f3;
+            border-left: 4px solid #1abc9c;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #16a085;
+        }
+        
+        /* Résultats détaillés pour l'onglet objectif */
+        .result-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .breakdown-item {
+            background-color: rgba(52, 152, 219, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .breakdown-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .breakdown-value {
+            font-size: 18px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -178,6 +304,13 @@
     <div class="calculator">
         <h1>Calculateur d'Intérêts Composés</h1>
         
+        <!-- Onglets -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="simulator">📈 Simulateur</button>
+            <button class="tab-btn" data-tab="objective">🎯 Objectif</button>
+        </div>
+        
+        <!-- Sélection de devise commune -->
         <div class="currency-group">
             <h3>Sélectionner votre devise</h3>
             <div class="form-group">
@@ -232,98 +365,193 @@
             </div>
         </div>
         
-        <div class="form-group">
-            <label for="initialAmount">Capital initial</label>
-            <div class="input-group">
-                <input type="number" id="initialAmount" min="0" value="1000">
-                <span id="initialAmountCurrencySymbol" class="currency-symbol">€</span>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="monthlyContribution">Versement mensuel</label>
-            <div class="input-group">
-                <input type="number" id="monthlyContribution" min="0" value="100">
-                <span id="monthlyContributionCurrencySymbol" class="currency-symbol">€</span>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="annualInterestRate">Taux d'intérêt annuel (%)</label>
-            <input type="number" id="annualInterestRate" min="0" step="0.1" value="5">
-        </div>
-        
-        <div class="form-group">
-            <label for="investmentPeriod">Durée d'investissement (années)</label>
-            <input type="number" id="investmentPeriod" min="1" max="50" value="20">
-        </div>
-        
-        <button id="toggleAdvanced">Options avancées ⤵</button>
-        
-        <div id="advancedOptions">
+        <!-- Onglet Simulateur -->
+        <div id="simulator" class="tab-content active">
             <div class="form-group">
-                <label for="contributionFrequency">Fréquence des versements</label>
-                <select id="contributionFrequency">
-                    <option value="12">Mensuelle</option>
-                    <option value="4">Trimestrielle</option>
-                    <option value="2">Semestrielle</option>
-                    <option value="1">Annuelle</option>
-                </select>
+                <label for="initialAmount">Capital initial</label>
+                <div class="input-group">
+                    <input type="number" id="initialAmount" min="0" value="1000">
+                    <span id="initialAmountCurrencySymbol" class="currency-symbol">€</span>
+                </div>
+            </div>
+            
+            <div class="contribution-group">
+                <div class="form-group">
+                    <label for="contributionAmount">Montant du versement</label>
+                    <div class="input-group">
+                        <input type="number" id="contributionAmount" min="0" value="100">
+                        <span id="contributionAmountCurrencySymbol" class="currency-symbol">€</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="contributionFrequency">Fréquence</label>
+                    <select id="contributionFrequency">
+                        <option value="12" selected>Mensuel</option>
+                        <option value="4">Trimestriel</option>
+                        <option value="2">Semestriel</option>
+                        <option value="1">Annuel</option>
+                    </select>
+                </div>
+            </div>
+            <p class="frequency-label" id="frequencyDescription">Soit 1 200 € par an</p>
+            
+            <div class="form-group">
+                <label for="annualInterestRate">Taux d'intérêt annuel (%)</label>
+                <input type="number" id="annualInterestRate" min="0" step="0.1" value="5">
             </div>
             
             <div class="form-group">
-                <label for="annualContributionIncrease">Augmentation annuelle des versements (%)</label>
-                <input type="number" id="annualContributionIncrease" min="0" step="0.1" value="0">
+                <label for="investmentPeriod">Durée d'investissement (années)</label>
+                <input type="number" id="investmentPeriod" min="1" max="50" value="20">
+            </div>
+            
+            <button id="toggleAdvanced">Options avancées ⤵</button>
+            
+            <div id="advancedOptions">
+                <div class="form-group">
+                    <label for="annualContributionIncrease">Augmentation annuelle des versements (%)</label>
+                    <input type="number" id="annualContributionIncrease" min="0" step="0.1" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="compoundFrequency">Fréquence de capitalisation des intérêts</label>
+                    <select id="compoundFrequency">
+                        <option value="12" selected>Mensuelle</option>
+                        <option value="4">Trimestrielle</option>
+                        <option value="2">Semestrielle</option>
+                        <option value="1">Annuelle</option>
+                        <option value="365">Journalière</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taxRate">Taux d'imposition sur les plus-values (%)</label>
+                    <input type="number" id="taxRate" min="0" max="100" step="0.1" value="30">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="calculate">Calculer</button>
+                <button id="reset" class="reset">Réinitialiser</button>
+            </div>
+            
+            <div class="results" id="results" style="display: none;">
+                <h2>Résultats</h2>
+                
+                <div class="result-item">
+                    <div>Montant total investi</div>
+                    <div class="result-value" id="totalInvested">0 €</div>
+                </div>
+                
+                <div class="result-item">
+                    <div>Intérêts gagnés</div>
+                    <div class="result-value" id="interestEarned">0 €</div>
+                </div>
+                
+                <div class="result-item">
+                    <div>Valeur finale brute</div>
+                    <div class="result-value" id="finalValue">0 €</div>
+                </div>
+                
+                <div class="result-item">
+                    <div>Valeur finale après impôts</div>
+                    <div class="result-value" id="afterTaxValue">0 €</div>
+                </div>
+            </div>
+            
+            <div class="chart-container" id="chart">
+                <!-- Le graphique sera inséré ici -->
+            </div>
+        </div>
+        
+        <!-- Onglet Objectif -->
+        <div id="objective" class="tab-content">
+            <div class="info-box">
+                <p>💡 Définissez votre objectif financier et découvrez combien vous devez investir régulièrement pour l'atteindre.</p>
             </div>
             
             <div class="form-group">
-                <label for="compoundFrequency">Fréquence de capitalisation</label>
-                <select id="compoundFrequency">
-                    <option value="12">Mensuelle</option>
-                    <option value="4">Trimestrielle</option>
-                    <option value="2">Semestrielle</option>
-                    <option value="1">Annuelle</option>
-                    <option value="365">Journalière</option>
-                </select>
+                <label for="targetAmount">Montant cible à atteindre</label>
+                <div class="input-group">
+                    <input type="number" id="targetAmount" min="0" value="100000">
+                    <span id="targetAmountCurrencySymbol" class="currency-symbol">€</span>
+                </div>
             </div>
             
             <div class="form-group">
-                <label for="taxRate">Taux d'imposition (%)</label>
-                <input type="number" id="taxRate" min="0" max="100" step="0.1" value="30">
-            </div>
-        </div>
-        
-        <div class="button-group">
-            <button id="calculate">Calculer</button>
-            <button id="reset" class="reset">Réinitialiser</button>
-        </div>
-        
-        <div class="results" id="results" style="display: none;">
-            <h2>Résultats</h2>
-            
-            <div class="result-item">
-                <div>Montant total investi</div>
-                <div class="result-value" id="totalInvested">0 €</div>
+                <label for="initialAmount2">Capital initial (optionnel)</label>
+                <div class="input-group">
+                    <input type="number" id="initialAmount2" min="0" value="0">
+                    <span id="initialAmount2CurrencySymbol" class="currency-symbol">€</span>
+                </div>
             </div>
             
-            <div class="result-item">
-                <div>Intérêts gagnés</div>
-                <div class="result-value" id="interestEarned">0 €</div>
+            <div class="form-group">
+                <label for="targetYears">Nombre d'années pour atteindre l'objectif</label>
+                <input type="number" id="targetYears" min="1" max="50" value="20">
             </div>
             
-            <div class="result-item">
-                <div>Valeur finale</div>
-                <div class="result-value" id="finalValue">0 €</div>
+            <div class="form-group">
+                <label for="targetInterestRate">Taux d'intérêt annuel estimé (%)</label>
+                <input type="number" id="targetInterestRate" min="0" step="0.1" value="5">
             </div>
             
-            <div class="result-item">
-                <div>Valeur finale après impôts</div>
-                <div class="result-value" id="afterTaxValue">0 €</div>
+            <button id="toggleAdvanced2">Options avancées ⤵</button>
+            
+            <div id="advancedOptions2">
+                <div class="form-group">
+                    <label for="compoundFrequency2">Fréquence de capitalisation des intérêts</label>
+                    <select id="compoundFrequency2">
+                        <option value="12" selected>Mensuelle</option>
+                        <option value="4">Trimestrielle</option>
+                        <option value="2">Semestrielle</option>
+                        <option value="1">Annuelle</option>
+                        <option value="365">Journalière</option>
+                    </select>
+                </div>
             </div>
-        </div>
-        
-        <div class="chart-container" id="chart">
-            <!-- Le graphique sera inséré ici -->
+            
+            <div class="button-group">
+                <button id="calculateObjective">Calculer les versements</button>
+                <button id="resetObjective" class="reset">Réinitialiser</button>
+            </div>
+            
+            <div class="results" id="resultsObjective" style="display: none;">
+                <h2>Versements nécessaires</h2>
+                
+                <div class="result-breakdown">
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Mensuel</div>
+                        <div class="breakdown-value" id="monthlyRequired">0 €</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Trimestriel</div>
+                        <div class="breakdown-value" id="quarterlyRequired">0 €</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Semestriel</div>
+                        <div class="breakdown-value" id="semiAnnualRequired">0 €</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">Annuel</div>
+                        <div class="breakdown-value" id="annualRequired">0 €</div>
+                    </div>
+                </div>
+                
+                <div class="result-item" style="margin-top: 20px;">
+                    <div>Total à investir (versements mensuels)</div>
+                    <div class="result-value" id="totalToInvest">0 €</div>
+                </div>
+                
+                <div class="result-item">
+                    <div>Intérêts générés</div>
+                    <div class="result-value" id="interestGenerated">0 €</div>
+                </div>
+            </div>
+            
+            <div class="chart-container" id="chartObjective">
+                <!-- Le graphique sera inséré ici -->
+            </div>
         </div>
     </div>
     

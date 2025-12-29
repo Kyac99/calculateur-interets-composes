@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // Variables DOM
+    // =============================================
+    // VARIABLES DOM - ONGLET SIMULATEUR
+    // =============================================
     const initialAmountInput = document.getElementById("initialAmount");
-    const monthlyContributionInput = document.getElementById("monthlyContribution");
+    const contributionAmountInput = document.getElementById("contributionAmount");
     const annualInterestRateInput = document.getElementById("annualInterestRate");
     const investmentPeriodInput = document.getElementById("investmentPeriod");
     const contributionFrequencySelect = document.getElementById("contributionFrequency");
@@ -18,13 +20,51 @@ document.addEventListener("DOMContentLoaded", function() {
     const toggleAdvancedBtn = document.getElementById("toggleAdvanced");
     const advancedOptionsDiv = document.getElementById("advancedOptions");
     const chartContainer = document.getElementById("chart");
+    const frequencyDescription = document.getElementById("frequencyDescription");
+    
+    // =============================================
+    // VARIABLES DOM - ONGLET OBJECTIF
+    // =============================================
+    const targetAmountInput = document.getElementById("targetAmount");
+    const initialAmount2Input = document.getElementById("initialAmount2");
+    const targetYearsInput = document.getElementById("targetYears");
+    const targetInterestRateInput = document.getElementById("targetInterestRate");
+    const compoundFrequency2Select = document.getElementById("compoundFrequency2");
+    const calculateObjectiveBtn = document.getElementById("calculateObjective");
+    const resetObjectiveBtn = document.getElementById("resetObjective");
+    const resultsObjectiveDiv = document.getElementById("resultsObjective");
+    const toggleAdvanced2Btn = document.getElementById("toggleAdvanced2");
+    const advancedOptions2Div = document.getElementById("advancedOptions2");
+    const chartObjectiveContainer = document.getElementById("chartObjective");
+    
+    const monthlyRequiredSpan = document.getElementById("monthlyRequired");
+    const quarterlyRequiredSpan = document.getElementById("quarterlyRequired");
+    const semiAnnualRequiredSpan = document.getElementById("semiAnnualRequired");
+    const annualRequiredSpan = document.getElementById("annualRequired");
+    const totalToInvestSpan = document.getElementById("totalToInvest");
+    const interestGeneratedSpan = document.getElementById("interestGenerated");
+    
+    // =============================================
+    // VARIABLES DOM - COMMUNES
+    // =============================================
     const currencySelect = document.getElementById("currency");
-    const initialAmountCurrencySymbol = document.getElementById("initialAmountCurrencySymbol");
-    const monthlyContributionCurrencySymbol = document.getElementById("monthlyContributionCurrencySymbol");
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const tabContents = document.querySelectorAll(".tab-content");
+    
+    // Symboles de devise dans les champs
+    const currencySymbols = [
+        document.getElementById("initialAmountCurrencySymbol"),
+        document.getElementById("contributionAmountCurrencySymbol"),
+        document.getElementById("targetAmountCurrencySymbol"),
+        document.getElementById("initialAmount2CurrencySymbol")
+    ];
     
     let chart = null;
+    let chartObjective = null;
     
-    // Définir les symboles et codes de devise
+    // =============================================
+    // DÉFINITION DES DEVISES
+    // =============================================
     const currencies = {
         EUR: { symbol: "€", locale: "fr-FR" },
         USD: { symbol: "$", locale: "en-US" },
@@ -70,39 +110,78 @@ document.addEventListener("DOMContentLoaded", function() {
         CDF: { symbol: "CDF", locale: "fr-CD" }
     };
     
-    // Devise active
     let activeCurrency = "EUR";
     
-    // Gérer le changement de devise
+    // =============================================
+    // GESTION DES ONGLETS
+    // =============================================
+    tabBtns.forEach(btn => {
+        btn.addEventListener("click", function() {
+            const tabId = this.getAttribute("data-tab");
+            
+            // Désactiver tous les onglets
+            tabBtns.forEach(b => b.classList.remove("active"));
+            tabContents.forEach(c => c.classList.remove("active"));
+            
+            // Activer l'onglet sélectionné
+            this.classList.add("active");
+            document.getElementById(tabId).classList.add("active");
+        });
+    });
+    
+    // =============================================
+    // GESTION DE LA DEVISE
+    // =============================================
     currencySelect.addEventListener("change", function() {
         activeCurrency = this.value;
         updateCurrencyLabels();
+        updateFrequencyDescription();
     });
     
-    // Mettre à jour les labels de devise
     function updateCurrencyLabels() {
         const currencySymbol = currencies[activeCurrency].symbol;
         
-        // Mettre à jour les symboles dans les champs de saisie
-        initialAmountCurrencySymbol.textContent = currencySymbol;
-        monthlyContributionCurrencySymbol.textContent = currencySymbol;
+        // Mettre à jour tous les symboles de devise
+        currencySymbols.forEach(span => {
+            if (span) span.textContent = currencySymbol;
+        });
         
-        // Mettre à jour les symboles de devise dans les résultats
-        if (resultsDiv.style.display !== "none") {
-            totalInvestedSpan.textContent = formatCurrency(parseFloat(totalInvestedSpan.textContent.replace(/[^\d.-]/g, "")));
-            interestEarnedSpan.textContent = formatCurrency(parseFloat(interestEarnedSpan.textContent.replace(/[^\d.-]/g, "")));
-            finalValueSpan.textContent = formatCurrency(parseFloat(finalValueSpan.textContent.replace(/[^\d.-]/g, "")));
-            afterTaxValueSpan.textContent = formatCurrency(parseFloat(afterTaxValueSpan.textContent.replace(/[^\d.-]/g, "")));
-        }
-        
-        // Mettre à jour l'axe Y du graphique si nécessaire
+        // Mettre à jour l'axe Y des graphiques
         if (chart) {
             chart.options.scales.y.title.text = `Valeur (${currencySymbol})`;
             chart.update();
         }
+        if (chartObjective) {
+            chartObjective.options.scales.y.title.text = `Valeur (${currencySymbol})`;
+            chartObjective.update();
+        }
     }
     
-    // Afficher/masquer les options avancées
+    // =============================================
+    // MISE À JOUR DE LA DESCRIPTION DE FRÉQUENCE
+    // =============================================
+    function updateFrequencyDescription() {
+        const amount = parseFloat(contributionAmountInput.value) || 0;
+        const frequency = parseInt(contributionFrequencySelect.value) || 12;
+        const annualAmount = amount * frequency;
+        const symbol = currencies[activeCurrency].symbol;
+        
+        const frequencyLabels = {
+            12: "mensuel",
+            4: "trimestriel",
+            2: "semestriel",
+            1: "annuel"
+        };
+        
+        frequencyDescription.textContent = `Soit ${formatCurrency(annualAmount)} par an (${frequency} versement${frequency > 1 ? 's' : ''} ${frequencyLabels[frequency]}${frequency > 1 ? 's' : ''})`;
+    }
+    
+    contributionAmountInput.addEventListener("input", updateFrequencyDescription);
+    contributionFrequencySelect.addEventListener("change", updateFrequencyDescription);
+    
+    // =============================================
+    // OPTIONS AVANCÉES
+    // =============================================
     toggleAdvancedBtn.addEventListener("click", function() {
         if (advancedOptionsDiv.style.display === "none" || advancedOptionsDiv.style.display === "") {
             advancedOptionsDiv.style.display = "block";
@@ -113,168 +192,234 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
     
-    // Calculer les intérêts composés
-    calculateBtn.addEventListener("click", calculateCompoundInterest);
-    
-    // Réinitialiser les champs
-    resetBtn.addEventListener("click", function() {
-        initialAmountInput.value = "1000";
-        monthlyContributionInput.value = "100";
-        annualInterestRateInput.value = "5";
-        investmentPeriodInput.value = "20";
-        contributionFrequencySelect.value = "12";
-        annualContributionIncreaseInput.value = "0";
-        compoundFrequencySelect.value = "12";
-        taxRateInput.value = "30";
-        currencySelect.value = "EUR";
-        activeCurrency = "EUR";
-        
-        updateCurrencyLabels();
-        resultsDiv.style.display = "none";
-        
-        if (chart) {
-            chart.destroy();
-            chart = null;
+    toggleAdvanced2Btn.addEventListener("click", function() {
+        if (advancedOptions2Div.style.display === "none" || advancedOptions2Div.style.display === "") {
+            advancedOptions2Div.style.display = "block";
+            toggleAdvanced2Btn.textContent = "Options avancées ⤴";
+        } else {
+            advancedOptions2Div.style.display = "none";
+            toggleAdvanced2Btn.textContent = "Options avancées ⤵";
         }
     });
     
-   function calculateCompoundInterest() {
-    // 1. Récupération des inputs (identique à votre code)
-    const initialAmount = parseFloat(initialAmountInput.value) || 0;
-    // On normalise le versement : quel est le montant TOTAL versé par an ?
-    const rawMonthlyContribution = parseFloat(monthlyContributionInput.value) || 0;
-    // Attention: votre UX dit "Versement Mensuel" mais permet de changer la fréquence.
-    // Logique standard : Si je dis 100€/mois, c'est 1200€/an peu importe la fréquence de versement réelle.
-    const annualContributionBase = rawMonthlyContribution * 12;
-
-    const annualInterestRate = parseFloat(annualInterestRateInput.value) / 100 || 0;
-    const investmentPeriod = parseInt(investmentPeriodInput.value) || 0;
-    const contributionFrequency = parseInt(contributionFrequencySelect.value) || 12; 
-    const annualContributionIncrease = parseFloat(annualContributionIncreaseInput.value) / 100 || 0;
-    const compoundFrequency = parseInt(compoundFrequencySelect.value) || 12;
-    const taxRate = parseFloat(taxRateInput.value) / 100 || 0;
-
-    let balance = initialAmount;
-    let totalContributions = initialAmount;
+    // =============================================
+    // CALCUL DES INTÉRÊTS COMPOSÉS (SIMULATEUR)
+    // =============================================
+    calculateBtn.addEventListener("click", calculateCompoundInterest);
     
-    // Pour éviter les bugs de float, on itère sur la plus petite unité commune : le MOIS
-    // (Hypothèse: la plupart des fréquences sont des multiples de mois: 1, 3, 6, 12)
-    const totalMonths = investmentPeriod * 12;
-    
-    // Calcul des montants unitaires par événement
-    // Si je verse chaque année, je verse (100 * 12) une fois.
-    // Si je verse chaque mois, je verse 100.
-    let currentContributionAmount = annualContributionBase / contributionFrequency;
-
-    const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
-
-    // Variables de suivi
-    let accumulatedInterest = 0; // Intérêts en attente de capitalisation
-
-    for (let month = 1; month <= totalMonths; month++) {
-        const yearIndex = Math.ceil(month / 12);
-
-        // 1. Gestion des Versements (CONTRIBUTIONS)
-        // Est-ce un mois de versement ?
-        // Ex: Fréquence 12 (Mensuel) -> 12/12 = 1 (tous les mois)
-        // Ex: Fréquence 1 (Annuel) -> 12/1 = 12 (tous les 12 mois)
-        const monthsPerContribution = 12 / contributionFrequency;
+    function calculateCompoundInterest() {
+        // Récupération des paramètres
+        const initialAmount = parseFloat(initialAmountInput.value) || 0;
+        const contributionAmount = parseFloat(contributionAmountInput.value) || 0;
+        const annualInterestRate = parseFloat(annualInterestRateInput.value) / 100 || 0;
+        const investmentPeriod = parseInt(investmentPeriodInput.value) || 0;
+        const contributionFrequency = parseInt(contributionFrequencySelect.value) || 12;
+        const annualContributionIncrease = parseFloat(annualContributionIncreaseInput.value) / 100 || 0;
+        const compoundFrequency = parseInt(compoundFrequencySelect.value) || 12;
+        const taxRate = parseFloat(taxRateInput.value) / 100 || 0;
         
-        // On verse EN DÉBUT de période pour gagner des intérêts dessus (plus réaliste)
-        if (month % monthsPerContribution === 0 || (monthsPerContribution < 1 && (month * contributionFrequency) % 12 === 0)) {
-            // Note: La logique simplifiée ici assume des fréquences > mensuelles ou multiples.
-            // Pour être ultra-précis, on verse si (month % (12/freq) === 0).
-            // Si la fréquence est > 12 (ex: Hebdo), on ajouterait simplement (annualBase / 12) chaque mois pour simplifier le graphique, 
-            // ou on complexifie la boucle pour passer en jours.
+        // Calcul précis période par période
+        // On utilise la fréquence de capitalisation comme unité de temps de base
+        const periodsPerYear = compoundFrequency;
+        const totalPeriods = investmentPeriod * periodsPerYear;
+        const ratePerPeriod = annualInterestRate / periodsPerYear;
+        
+        // Nombre de versements par an
+        const contributionsPerYear = contributionFrequency;
+        
+        // Montant du versement (peut augmenter chaque année)
+        let currentContributionAmount = contributionAmount;
+        
+        let balance = initialAmount;
+        let totalContributions = initialAmount;
+        
+        const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
+        
+        for (let period = 1; period <= totalPeriods; period++) {
+            // Déterminer dans quelle année on se trouve (1-indexed)
+            const currentYear = Math.ceil(period / periodsPerYear);
+            const periodInYear = ((period - 1) % periodsPerYear) + 1;
             
-            // Restons simple : on ajoute le versement si c'est le moment
-            if (Number.isInteger(monthsPerContribution)) {
-                 if (month % monthsPerContribution === 0) {
+            // Vérifier si on doit ajouter un versement cette période
+            // Calculer combien de périodes de capitalisation entre chaque versement
+            const periodsBetweenContributions = periodsPerYear / contributionsPerYear;
+            
+            // On verse au début de chaque période de versement
+            if (periodsBetweenContributions >= 1) {
+                // Si on capitalise plus souvent ou aussi souvent qu'on verse
+                if ((period - 1) % periodsBetweenContributions === 0) {
                     balance += currentContributionAmount;
                     totalContributions += currentContributionAmount;
-                 }
+                }
             } else {
-                // Cas ou on verse plus souvent que 1 fois par mois (ex: hebdo)
-                // On lisse sur le mois pour éviter de faire une boucle par jour
-                balance += (annualContributionBase / 12);
-                totalContributions += (annualContributionBase / 12);
+                // Si on verse plus souvent qu'on capitalise (cas rare)
+                // On ajoute le montant proportionnel pour cette période
+                const contributionsThisPeriod = contributionsPerYear / periodsPerYear;
+                const amountThisPeriod = currentContributionAmount * contributionsThisPeriod;
+                balance += amountThisPeriod;
+                totalContributions += amountThisPeriod;
+            }
+            
+            // Appliquer les intérêts pour cette période
+            balance *= (1 + ratePerPeriod);
+            
+            // Fin d'année: sauvegarder les données et augmenter les versements
+            if (period % periodsPerYear === 0) {
+                const totalInterest = balance - totalContributions;
+                yearlyData.push({
+                    year: currentYear,
+                    balance: balance,
+                    contributions: totalContributions,
+                    interest: totalInterest
+                });
+                
+                // Augmentation annuelle des versements
+                if (annualContributionIncrease > 0) {
+                    currentContributionAmount *= (1 + annualContributionIncrease);
+                }
             }
         }
-
-        // 2. Calcul des Intérêts (Simple sur le mois)
-        // Taux mensuel effectif
-        const monthlyRate = annualInterestRate / 12; 
-        const monthlyInterest = balance * monthlyRate;
-        accumulatedInterest += monthlyInterest;
-
-        // 3. Capitalisation (COMPOUNDING)
-        // Est-ce que les intérêts sont versés au solde (génèrent-ils eux-mêmes des intérêts ?)
-        const monthsPerCompounding = 12 / compoundFrequency;
         
-        // Si c'est le moment de capitaliser (ex: fin d'année pour compound 1)
-        if (month % monthsPerCompounding === 0) {
-            balance += accumulatedInterest;
-            accumulatedInterest = 0; // Remise à zéro, ils sont maintenant dans la balance
-        }
-
-        // 4. Augmentation annuelle des versements (Fin d'année)
-        if (month % 12 === 0 && annualContributionIncrease > 0) {
-            currentContributionAmount *= (1 + annualContributionIncrease);
-            // Si on est en mode lissé (hebdo), on augmente la base annuelle
-            // (Note: annualContributionBase n'est pas utilisé dans la boucle principale sauf pour le lissage hebdo, à adapter si besoin)
-        }
-
-        // 5. Sauvegarde des données pour le graphique (Fin d'année)
-        if (month % 12 === 0) {
-            // On ajoute les intérêts accumulés "non capitalisés" à la valeur affichée pour être précis visuellement
-            const displayBalance = balance + accumulatedInterest; 
-            const totalInterestGenerated = displayBalance - totalContributions;
-
-            yearlyData.push({
-                year: month / 12,
-                balance: displayBalance,
-                contributions: totalContributions,
-                interest: totalInterestGenerated
-            });
-        }
+        // Calculs finaux
+        const finalBalance = balance;
+        const totalInterest = finalBalance - totalContributions;
+        const taxOnInterest = totalInterest * taxRate;
+        const afterTaxBalance = finalBalance - taxOnInterest;
+        
+        // Affichage des résultats
+        totalInvestedSpan.textContent = formatCurrency(totalContributions);
+        interestEarnedSpan.textContent = formatCurrency(totalInterest);
+        finalValueSpan.textContent = formatCurrency(finalBalance);
+        afterTaxValueSpan.textContent = formatCurrency(afterTaxBalance);
+        
+        resultsDiv.style.display = "block";
+        createChart(yearlyData);
     }
-
-    // Calculs finaux
-    const finalBalance = balance + accumulatedInterest; // On n'oublie pas les intérêts qui "traînent" depuis la dernière capitalisation
-    const totalInterest = finalBalance - totalContributions;
-    const taxOnInterest = totalInterest * taxRate;
-    const afterTaxBalance = finalBalance - taxOnInterest;
-
-    // Affichage (identique à votre code)
-    totalInvestedSpan.textContent = formatCurrency(totalContributions);
-    interestEarnedSpan.textContent = formatCurrency(totalInterest);
-    finalValueSpan.textContent = formatCurrency(finalBalance);
-    afterTaxValueSpan.textContent = formatCurrency(afterTaxBalance);
-
-    resultsDiv.style.display = "block";
-    createChart(yearlyData);
-}
     
+    // =============================================
+    // CALCUL DE L'OBJECTIF (ONGLET 2)
+    // =============================================
+    calculateObjectiveBtn.addEventListener("click", calculateRequiredContribution);
+    
+    function calculateRequiredContribution() {
+        // Récupération des paramètres
+        const targetAmount = parseFloat(targetAmountInput.value) || 0;
+        const initialAmount = parseFloat(initialAmount2Input.value) || 0;
+        const years = parseInt(targetYearsInput.value) || 0;
+        const annualRate = parseFloat(targetInterestRateInput.value) / 100 || 0;
+        const compoundFrequency = parseInt(compoundFrequency2Select.value) || 12;
+        
+        if (targetAmount <= 0 || years <= 0) {
+            alert("Veuillez entrer un montant cible et une durée valides.");
+            return;
+        }
+        
+        // Calcul du montant nécessaire pour chaque fréquence de versement
+        // Formule: PMT = (FV - PV * (1+r)^n) * r / ((1+r)^n - 1)
+        // Où n est le nombre de périodes et r le taux par période
+        
+        const frequencies = [12, 4, 2, 1]; // Mensuel, Trimestriel, Semestriel, Annuel
+        const results = {};
+        
+        frequencies.forEach(freq => {
+            const result = calculatePMT(targetAmount, initialAmount, years, annualRate, compoundFrequency, freq);
+            results[freq] = result;
+        });
+        
+        // Affichage des résultats
+        monthlyRequiredSpan.textContent = formatCurrency(results[12].payment);
+        quarterlyRequiredSpan.textContent = formatCurrency(results[4].payment);
+        semiAnnualRequiredSpan.textContent = formatCurrency(results[2].payment);
+        annualRequiredSpan.textContent = formatCurrency(results[1].payment);
+        
+        // Calcul du total investi et des intérêts (basé sur les versements mensuels)
+        const monthlyPayment = results[12].payment;
+        const totalInvested = initialAmount + (monthlyPayment * 12 * years);
+        const interestGenerated = targetAmount - totalInvested;
+        
+        totalToInvestSpan.textContent = formatCurrency(totalInvested);
+        interestGeneratedSpan.textContent = formatCurrency(interestGenerated);
+        
+        resultsObjectiveDiv.style.display = "block";
+        
+        // Créer le graphique de projection
+        createObjectiveChart(initialAmount, monthlyPayment, 12, annualRate, compoundFrequency, years, targetAmount);
+    }
+    
+    /**
+     * Calcule le versement périodique nécessaire (PMT) pour atteindre un objectif
+     * en tenant compte de la fréquence de capitalisation et de versement
+     */
+    function calculatePMT(targetAmount, initialAmount, years, annualRate, compoundFrequency, contributionFrequency) {
+        // Taux par période de capitalisation
+        const ratePerCompound = annualRate / compoundFrequency;
+        const totalCompoundPeriods = years * compoundFrequency;
+        
+        // Valeur future du capital initial
+        const fvInitial = initialAmount * Math.pow(1 + ratePerCompound, totalCompoundPeriods);
+        
+        // Montant restant à atteindre via les versements
+        const remainingTarget = targetAmount - fvInitial;
+        
+        if (remainingTarget <= 0) {
+            // Le capital initial seul suffit
+            return { payment: 0, totalInvested: initialAmount, interest: targetAmount - initialAmount };
+        }
+        
+        // Nombre de versements
+        const totalContributions = years * contributionFrequency;
+        
+        // Calculer le taux effectif par période de versement
+        // En tenant compte de la capitalisation
+        const periodsPerContribution = compoundFrequency / contributionFrequency;
+        
+        let payment;
+        
+        if (annualRate === 0) {
+            // Cas sans intérêts
+            payment = remainingTarget / totalContributions;
+        } else if (periodsPerContribution >= 1) {
+            // Capitalisation plus fréquente ou égale aux versements
+            // Utiliser la formule de valeur future d'une annuité
+            const effectiveRatePerContribution = Math.pow(1 + ratePerCompound, periodsPerContribution) - 1;
+            
+            // FV = PMT * ((1+r)^n - 1) / r
+            // PMT = FV * r / ((1+r)^n - 1)
+            const fvFactor = (Math.pow(1 + effectiveRatePerContribution, totalContributions) - 1) / effectiveRatePerContribution;
+            payment = remainingTarget / fvFactor;
+        } else {
+            // Versements plus fréquents que la capitalisation
+            // Approximation: utiliser le taux proportionnel
+            const ratePerContribution = annualRate / contributionFrequency;
+            const fvFactor = (Math.pow(1 + ratePerContribution, totalContributions) - 1) / ratePerContribution;
+            payment = remainingTarget / fvFactor;
+        }
+        
+        const totalInvested = initialAmount + (payment * totalContributions);
+        const interest = targetAmount - totalInvested;
+        
+        return { payment, totalInvested, interest };
+    }
+    
+    // =============================================
+    // CRÉATION DES GRAPHIQUES
+    // =============================================
     function createChart(yearlyData) {
-        // Détruire le graphique précédent s'il existe
         if (chart) {
             chart.destroy();
         }
         
-        // Préparer les données pour le graphique
         const years = yearlyData.map(data => data.year);
         const balances = yearlyData.map(data => data.balance);
         const contributions = yearlyData.map(data => data.contributions);
         const interests = yearlyData.map(data => data.interest);
         
-        // Créer un nouvel élément canvas
         const canvas = document.createElement('canvas');
         chartContainer.innerHTML = '';
         chartContainer.appendChild(canvas);
         
         const currencySymbol = currencies[activeCurrency].symbol;
         
-        // Créer le graphique
         chart = new Chart(canvas, {
             type: 'line',
             data: {
@@ -341,6 +486,169 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
+    function createObjectiveChart(initialAmount, payment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
+        if (chartObjective) {
+            chartObjective.destroy();
+        }
+        
+        // Générer les données année par année
+        const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
+        
+        const periodsPerYear = compoundFrequency;
+        const ratePerPeriod = annualRate / periodsPerYear;
+        const contributionsPerYear = contributionFrequency;
+        const periodsBetweenContributions = periodsPerYear / contributionsPerYear;
+        
+        let balance = initialAmount;
+        let totalContributions = initialAmount;
+        
+        for (let year = 1; year <= years; year++) {
+            const startPeriod = (year - 1) * periodsPerYear + 1;
+            const endPeriod = year * periodsPerYear;
+            
+            for (let period = startPeriod; period <= endPeriod; period++) {
+                // Versements
+                if (periodsBetweenContributions >= 1) {
+                    if ((period - 1) % periodsBetweenContributions === 0) {
+                        balance += payment;
+                        totalContributions += payment;
+                    }
+                } else {
+                    const amountThisPeriod = payment * (contributionsPerYear / periodsPerYear);
+                    balance += amountThisPeriod;
+                    totalContributions += amountThisPeriod;
+                }
+                
+                // Intérêts
+                balance *= (1 + ratePerPeriod);
+            }
+            
+            yearlyData.push({
+                year: year,
+                balance: balance,
+                contributions: totalContributions,
+                interest: balance - totalContributions
+            });
+        }
+        
+        const yearsLabels = yearlyData.map(data => data.year);
+        const balances = yearlyData.map(data => data.balance);
+        const contributions = yearlyData.map(data => data.contributions);
+        const targetLine = yearlyData.map(() => targetAmount);
+        
+        const canvas = document.createElement('canvas');
+        chartObjectiveContainer.innerHTML = '';
+        chartObjectiveContainer.appendChild(canvas);
+        
+        const currencySymbol = currencies[activeCurrency].symbol;
+        
+        chartObjective = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: yearsLabels,
+                datasets: [
+                    {
+                        label: 'Projection de croissance',
+                        data: balances,
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Montants investis',
+                        data: contributions,
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Objectif',
+                        data: targetLine,
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Années'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: `Valeur (${currencySymbol})`
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value, false);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // =============================================
+    // RÉINITIALISATION
+    // =============================================
+    resetBtn.addEventListener("click", function() {
+        initialAmountInput.value = "1000";
+        contributionAmountInput.value = "100";
+        annualInterestRateInput.value = "5";
+        investmentPeriodInput.value = "20";
+        contributionFrequencySelect.value = "12";
+        annualContributionIncreaseInput.value = "0";
+        compoundFrequencySelect.value = "12";
+        taxRateInput.value = "30";
+        
+        updateFrequencyDescription();
+        resultsDiv.style.display = "none";
+        
+        if (chart) {
+            chart.destroy();
+            chart = null;
+        }
+    });
+    
+    resetObjectiveBtn.addEventListener("click", function() {
+        targetAmountInput.value = "100000";
+        initialAmount2Input.value = "0";
+        targetYearsInput.value = "20";
+        targetInterestRateInput.value = "5";
+        compoundFrequency2Select.value = "12";
+        
+        resultsObjectiveDiv.style.display = "none";
+        
+        if (chartObjective) {
+            chartObjective.destroy();
+            chartObjective = null;
+        }
+    });
+    
+    // =============================================
+    // FORMATAGE DES DEVISES
+    // =============================================
     function formatCurrency(value, includeSymbol = true) {
         const currencyInfo = currencies[activeCurrency];
         const formatter = new Intl.NumberFormat(currencyInfo.locale, {
@@ -351,6 +659,9 @@ document.addEventListener("DOMContentLoaded", function() {
         return formatter.format(Math.round(value)) + (includeSymbol ? ` ${currencyInfo.symbol}` : '');
     }
     
-    // Initialiser les labels de devise
+    // =============================================
+    // INITIALISATION
+    // =============================================
     updateCurrencyLabels();
+    updateFrequencyDescription();
 });
