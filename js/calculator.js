@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const interestEarnedSpan = document.getElementById("interestEarned");
     const finalValueSpan = document.getElementById("finalValue");
     const afterTaxValueSpan = document.getElementById("afterTaxValue");
+    const globalReturnSpan = document.getElementById("globalReturn");
     const toggleAdvancedBtn = document.getElementById("toggleAdvanced");
     const advancedOptionsDiv = document.getElementById("advancedOptions");
     const chartContainer = document.getElementById("chart");
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const annualRequiredSpan = document.getElementById("annualRequired");
     const totalToInvestSpan = document.getElementById("totalToInvest");
     const interestGeneratedSpan = document.getElementById("interestGenerated");
+    const globalReturnObjectiveSpan = document.getElementById("globalReturnObjective");
     
     // =============================================
     // VARIABLES DOM - COMMUNES
@@ -305,11 +307,15 @@ document.addEventListener("DOMContentLoaded", function() {
         const taxOnInterest = totalInterest * taxRate;
         const afterTaxBalance = finalBalance - taxOnInterest;
         
+        // Calcul du rendement global (intérêts / montant investi * 100)
+        const globalReturn = totalContributions > 0 ? (totalInterest / totalContributions) * 100 : 0;
+        
         // Affichage des résultats
         totalInvestedSpan.textContent = formatCurrency(totalContributions);
         interestEarnedSpan.textContent = formatCurrency(totalInterest);
         finalValueSpan.textContent = formatCurrency(finalBalance);
         afterTaxValueSpan.textContent = formatCurrency(afterTaxBalance);
+        globalReturnSpan.textContent = formatPercentage(globalReturn);
         
         resultsDiv.style.display = "block";
         createChart(yearlyData);
@@ -320,55 +326,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // =============================================
     calculateObjectiveBtn.addEventListener("click", calculateRequiredContribution);
     
-    function calculateRequiredContribution() {
-        // Récupération des paramètres
-        const targetAmount = parseFloat(targetAmountInput.value) || 0;
-        const initialAmount = parseFloat(initialAmount2Input.value) || 0;
-        const years = parseInt(targetYearsInput.value) || 0;
-        const annualRate = parseFloat(targetInterestRateInput.value) / 100 || 0;
-        const compoundFrequency = parseInt(compoundFrequency2Select.value) || 12;
-        
-        if (targetAmount <= 0 || years <= 0) {
-            alert("Veuillez entrer un montant cible et une durée valides.");
-            return;
-        }
-        
-        // Calcul du montant nécessaire pour chaque fréquence de versement
-        // Formule: PMT = (FV - PV * (1+r)^n) * r / ((1+r)^n - 1)
-        // Où n est le nombre de périodes et r le taux par période
-        
-        const frequencies = [12, 4, 2, 1]; // Mensuel, Trimestriel, Semestriel, Annuel
-        const results = {};
-        
-        frequencies.forEach(freq => {
-            const result = calculatePMT(targetAmount, initialAmount, years, annualRate, compoundFrequency, freq);
-            results[freq] = result;
-        });
-        
-        // Affichage des résultats
-        monthlyRequiredSpan.textContent = formatCurrency(results[12].payment);
-        quarterlyRequiredSpan.textContent = formatCurrency(results[4].payment);
-        semiAnnualRequiredSpan.textContent = formatCurrency(results[2].payment);
-        annualRequiredSpan.textContent = formatCurrency(results[1].payment);
-        
-        // Calcul du total investi et des intérêts (basé sur les versements mensuels)
-        const monthlyPayment = results[12].payment;
-        const totalInvested = initialAmount + (monthlyPayment * 12 * years);
-        const interestGenerated = targetAmount - totalInvested;
-        
-        totalToInvestSpan.textContent = formatCurrency(totalInvested);
-        interestGeneratedSpan.textContent = formatCurrency(interestGenerated);
-        
-        resultsObjectiveDiv.style.display = "block";
-        
-        // Créer le graphique de projection
-        createObjectiveChart(initialAmount, monthlyPayment, 12, annualRate, compoundFrequency, years, targetAmount);
-    }
-    
-    /**
-     * Calcule le versement périodique nécessaire (PMT) pour atteindre un objectif
-     * en tenant compte de la fréquence de capitalisation et de versement
-     */
     // =============================================
     // LOGIQUE DE CALCUL INVERSÉ (SOLVEUR)
     // =============================================
@@ -468,9 +425,13 @@ document.addEventListener("DOMContentLoaded", function() {
         // Calcul des totaux
         const totalInvested = initialAmount + (baseMonthlyPayment * 12 * years);
         const interestGenerated = targetAmount - totalInvested;
+        
+        // Calcul du rendement global (intérêts / montant investi * 100)
+        const globalReturn = totalInvested > 0 ? (interestGenerated / totalInvested) * 100 : 0;
 
         totalToInvestSpan.textContent = formatCurrency(totalInvested);
         interestGeneratedSpan.textContent = formatCurrency(interestGenerated);
+        globalReturnObjectiveSpan.textContent = formatPercentage(globalReturn);
 
         resultsObjectiveDiv.style.display = "block";
 
@@ -731,6 +692,13 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         
         return formatter.format(Math.round(value)) + (includeSymbol ? ` ${currencyInfo.symbol}` : '');
+    }
+    
+    // =============================================
+    // FORMATAGE DES POURCENTAGES
+    // =============================================
+    function formatPercentage(value) {
+        return value.toFixed(2).replace('.', ',') + ' %';
     }
     
     // =============================================

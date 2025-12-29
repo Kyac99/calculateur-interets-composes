@@ -182,9 +182,19 @@
             border-bottom: 1px solid #3498db;
         }
         
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
         .result-value {
             font-weight: 600;
             font-size: 18px;
+        }
+        
+        .result-value.highlight {
+            color: #2ecc71;
         }
         
         .result-highlight {
@@ -457,6 +467,11 @@
                     <div>Valeur finale après impôts</div>
                     <div class="result-value" id="afterTaxValue">0 €</div>
                 </div>
+                
+                <div class="result-item">
+                    <div>📊 Rendement global</div>
+                    <div class="result-value highlight" id="globalReturn">0 %</div>
+                </div>
             </div>
             
             <div class="chart-container" id="chart">
@@ -546,6 +561,11 @@
                 <div class="result-item">
                     <div>Intérêts générés</div>
                     <div class="result-value" id="interestGenerated">0 €</div>
+                </div>
+                
+                <div class="result-item">
+                    <div>📊 Rendement global</div>
+                    <div class="result-value highlight" id="globalReturnObjective">0 %</div>
                 </div>
             </div>
             
