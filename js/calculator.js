@@ -369,56 +369,116 @@ document.addEventListener("DOMContentLoaded", function() {
      * Calcule le versement périodique nécessaire (PMT) pour atteindre un objectif
      * en tenant compte de la fréquence de capitalisation et de versement
      */
-    function calculatePMT(targetAmount, initialAmount, years, annualRate, compoundFrequency, contributionFrequency) {
-        // Taux par période de capitalisation
-        const ratePerCompound = annualRate / compoundFrequency;
-        const totalCompoundPeriods = years * compoundFrequency;
+    // =============================================
+    // LOGIQUE DE CALCUL INVERSÉ (SOLVEUR)
+    // =============================================
+
+    /**
+     * Fonction qui simule le futur capital (FV) avec les règles STRICTES du simulateur.
+     * C'est le "jumeau" de votre fonction calculateCompoundInterest
+     */
+    function simulateFutureValue(initialAmount, monthlyContribution, years, annualRate, compoundFrequency) {
+        let balance = initialAmount;
+        let accumulatedInterest = 0;
+        const totalMonths = years * 12;
         
-        // Valeur future du capital initial
-        const fvInitial = initialAmount * Math.pow(1 + ratePerCompound, totalCompoundPeriods);
-        
-        // Montant restant à atteindre via les versements
-        const remainingTarget = targetAmount - fvInitial;
-        
-        if (remainingTarget <= 0) {
-            // Le capital initial seul suffit
-            return { payment: 0, totalInvested: initialAmount, interest: targetAmount - initialAmount };
+        // On itère mois par mois comme dans le simulateur
+        for (let month = 1; month <= totalMonths; month++) {
+            // 1. Calcul des intérêts (accumulés en attente)
+            // Taux mensuel simple
+            const monthlyRate = annualRate / 12;
+            accumulatedInterest += balance * monthlyRate;
+
+            // 2. Capitalisation (Est-ce le moment de verser les intérêts ?)
+            const monthsPerCompounding = 12 / compoundFrequency;
+            if (month % Math.round(monthsPerCompounding) === 0) {
+                balance += accumulatedInterest;
+                accumulatedInterest = 0;
+            }
+
+            // 3. Versement (Fin de mois)
+            // On ajoute le versement mensuel
+            balance += monthlyContribution;
         }
-        
-        // Nombre de versements
-        const totalContributions = years * contributionFrequency;
-        
-        // Calculer le taux effectif par période de versement
-        // En tenant compte de la capitalisation
-        const periodsPerContribution = compoundFrequency / contributionFrequency;
-        
-        let payment;
-        
-        if (annualRate === 0) {
-            // Cas sans intérêts
-            payment = remainingTarget / totalContributions;
-        } else if (periodsPerContribution >= 1) {
-            // Capitalisation plus fréquente ou égale aux versements
-            // Utiliser la formule de valeur future d'une annuité
-            const effectiveRatePerContribution = Math.pow(1 + ratePerCompound, periodsPerContribution) - 1;
-            
-            // FV = PMT * ((1+r)^n - 1) / r
-            // PMT = FV * r / ((1+r)^n - 1)
-            const fvFactor = (Math.pow(1 + effectiveRatePerContribution, totalContributions) - 1) / effectiveRatePerContribution;
-            payment = remainingTarget / fvFactor;
-        } else {
-            // Versements plus fréquents que la capitalisation
-            // Approximation: utiliser le taux proportionnel
-            const ratePerContribution = annualRate / contributionFrequency;
-            const fvFactor = (Math.pow(1 + ratePerContribution, totalContributions) - 1) / ratePerContribution;
-            payment = remainingTarget / fvFactor;
-        }
-        
-        const totalInvested = initialAmount + (payment * totalContributions);
-        const interest = targetAmount - totalInvested;
-        
-        return { payment, totalInvested, interest };
+
+        // On retourne le solde final + les intérêts qui traînent encore en salle d'attente
+        return balance + accumulatedInterest;
     }
+
+    /**
+     * Calcule le versement mensuel nécessaire par DICHOTOMIE (Essais successifs)
+     * Cela garantit que le résultat est 100% aligné avec le simulateur.
+     */
+    function solveForMonthlyContribution(targetAmount, initialAmount, years, annualRate, compoundFrequency) {
+        let min = 0;
+        let max = targetAmount; // Borne haute large
+        let precision = 0.01; // On veut être précis au centime près
+        let guess = max / 2;
+        
+        // On boucle jusqu'à trouver le bon montant (généralement < 20 itérations)
+        for (let i = 0; i < 100; i++) {
+            const simulatedResult = simulateFutureValue(initialAmount, guess, years, annualRate, compoundFrequency);
+            
+            if (Math.abs(simulatedResult - targetAmount) < precision) {
+                return guess;
+            }
+            
+            if (simulatedResult < targetAmount) {
+                min = guess;
+            } else {
+                max = guess;
+            }
+            guess = (min + max) / 2;
+        }
+        return guess;
+    }
+
+    function calculateRequiredContribution() {
+        // Récupération des paramètres
+        const targetAmount = parseFloat(targetAmountInput.value) || 0;
+        const initialAmount = parseFloat(initialAmount2Input.value) || 0;
+        const years = parseInt(targetYearsInput.value) || 0;
+        const annualRate = parseFloat(targetInterestRateInput.value) / 100 || 0;
+        const compoundFrequency = parseInt(compoundFrequency2Select.value) || 12; // Mensuel par défaut, ou Annuel (1)
+
+        if (targetAmount <= 0 || years <= 0) {
+            alert("Veuillez entrer un montant cible et une durée valides.");
+            return;
+        }
+
+        // 1. Trouver le versement MENSUEL de base via le Solveur
+        const baseMonthlyPayment = solveForMonthlyContribution(targetAmount, initialAmount, years, annualRate, compoundFrequency);
+
+        // 2. Extrapoler pour les autres fréquences (titre indicatif)
+        // Note : Pour être puriste, on devrait lancer le solveur pour chaque fréquence, 
+        // mais multiplier par 3, 6 ou 12 est suffisant pour l'affichage indicatif "combien ça fait par an".
+        const results = {
+            12: baseMonthlyPayment,
+            4: baseMonthlyPayment * 3,
+            2: baseMonthlyPayment * 6,
+            1: baseMonthlyPayment * 12
+        };
+
+        // Affichage des résultats
+        monthlyRequiredSpan.textContent = formatCurrency(results[12]);
+        quarterlyRequiredSpan.textContent = formatCurrency(results[4]);
+        semiAnnualRequiredSpan.textContent = formatCurrency(results[2]);
+        annualRequiredSpan.textContent = formatCurrency(results[1]);
+
+        // Calcul des totaux
+        const totalInvested = initialAmount + (baseMonthlyPayment * 12 * years);
+        const interestGenerated = targetAmount - totalInvested;
+
+        totalToInvestSpan.textContent = formatCurrency(totalInvested);
+        interestGeneratedSpan.textContent = formatCurrency(interestGenerated);
+
+        resultsObjectiveDiv.style.display = "block";
+
+        // Créer le graphique avec la logique stricte
+        createObjectiveChart(initialAmount, baseMonthlyPayment, 12, annualRate, compoundFrequency, years, targetAmount);
+    }
+
+   
     
     // =============================================
     // CRÉATION DES GRAPHIQUES
@@ -505,81 +565,69 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
-    function createObjectiveChart(initialAmount, payment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
+     // =============================================
+    // GRAPHIQUE OBJECTIF (LOGIQUE STRICTE)
+    // =============================================
+    function createObjectiveChart(initialAmount, monthlyPayment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
         if (chartObjective) {
             chartObjective.destroy();
         }
-        
-        // Générer les données année par année
+
         const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
-        
-        // On normalise tout sur la fréquence de capitalisation (souvent mensuelle)
-        const periodsPerYear = compoundFrequency;
-        const ratePerPeriod = annualRate / periodsPerYear;
-        
-        // Fréquence des versements par rapport à la capitalisation
-        // Ex: Capitalisation 12 (Mensuel), Versement 1 (Annuel) => ratio 12
-        const periodsBetweenContributions = periodsPerYear / contributionFrequency;
         
         let balance = initialAmount;
         let totalContributions = initialAmount;
+        let accumulatedInterest = 0; // Salle d'attente
         
-        // Boucle sur toutes les années
-        for (let year = 1; year <= years; year++) {
+        const totalMonths = years * 12;
+
+        for (let month = 1; month <= totalMonths; month++) {
             
-            // Boucle sur les périodes de capitalisation de l'année (ex: 1 à 12)
-            for (let p = 1; p <= periodsPerYear; p++) {
-                // Compteur global de périodes n'est pas strictement nécessaire ici, 
-                // on gère la logique intra-annuelle.
+            // --- 1. INTÉRÊTS ---
+            const monthlyRate = annualRate / 12;
+            accumulatedInterest += balance * monthlyRate;
 
-                // --- 1. INTÉRÊTS (D'abord, sur l'argent déjà là) ---
-                balance *= (1 + ratePerPeriod);
-
-                // --- 2. VERSEMENT (Ensuite, Fin de période) ---
-                // On doit déterminer si c'est le moment de verser.
-                // Logique Fin de Période : Si ratio est 1 (mensuel), on verse à p=1, p=2...
-                // Si ratio est 3 (trimestriel), on verse à p=3, p=6, p=9, p=12
-                
-                // Cas standard: Le versement est moins fréquent ou égal à la capitalisation
-                if (periodsBetweenContributions >= 1) {
-                    // On utilise Math.round pour éviter les erreurs de float (ex: 2.99999)
-                    // Si p est un multiple de l'intervalle, on verse.
-                    if (p % Math.round(periodsBetweenContributions) === 0) {
-                        balance += payment;
-                        totalContributions += payment;
-                    }
-                } 
-                // Cas rare: On verse plus souvent qu'on ne capitalise (ex: hebdo sur mensuel)
-                else {
-                    // On lisse le versement sur chaque période de capitalisation
-                    const contributionsPerCompoundPeriod = 1 / periodsBetweenContributions; // ex: 4 versements par période
-                    const amountThisPeriod = payment * contributionsPerCompoundPeriod;
-                    balance += amountThisPeriod;
-                    totalContributions += amountThisPeriod;
-                }
+            // --- 2. CAPITALISATION ---
+            const monthsPerCompounding = 12 / compoundFrequency;
+            if (month % Math.round(monthsPerCompounding) === 0) {
+                balance += accumulatedInterest;
+                accumulatedInterest = 0;
             }
-            
-            // Sauvegarde Fin d'année
-            yearlyData.push({
-                year: year,
-                balance: balance,
-                contributions: totalContributions,
-                interest: balance - totalContributions
-            });
+
+            // --- 3. VERSEMENT (Fin de mois) ---
+            balance += monthlyPayment;
+            totalContributions += monthlyPayment;
+
+            // --- 4. SAUVEGARDE (Fin d'année) ---
+            if (month % 12 === 0) {
+                const currentYear = month / 12;
+                
+                // Pour le graphique, on inclut visuellement les intérêts en attente
+                // pour éviter l'effet "escalier" trop violent, ou on reste strict.
+                // Restons stricts pour être cohérent avec le chiffre final.
+                const displayBalance = balance + accumulatedInterest; 
+                
+                yearlyData.push({
+                    year: currentYear,
+                    balance: displayBalance,
+                    contributions: totalContributions,
+                    interest: displayBalance - totalContributions
+                });
+            }
         }
-        
+
+        // Préparation des données pour Chart.js
         const yearsLabels = yearlyData.map(data => data.year);
         const balancesData = yearlyData.map(data => data.balance);
         const contributionsData = yearlyData.map(data => data.contributions);
-        // Ligne cible constante
         const targetLine = yearlyData.map(() => targetAmount);
-        
+
         const canvas = document.createElement('canvas');
         chartObjectiveContainer.innerHTML = '';
         chartObjectiveContainer.appendChild(canvas);
-        
+
         const currencySymbol = currencies[activeCurrency].symbol;
-        
+
         chartObjective = new Chart(canvas, {
             type: 'line',
             data: {
@@ -587,7 +635,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 datasets: [
                     {
                         label: 'Projection',
-                        data: balancesData, // Renommé pour clarté
+                        data: balancesData,
                         backgroundColor: 'rgba(52, 152, 219, 0.2)',
                         borderColor: 'rgba(52, 152, 219, 1)',
                         borderWidth: 2,
@@ -595,7 +643,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     },
                     {
                         label: 'Montants investis',
-                        data: contributionsData, // Renommé pour clarté
+                        data: contributionsData,
                         backgroundColor: 'rgba(46, 204, 113, 0.2)',
                         borderColor: 'rgba(46, 204, 113, 1)',
                         borderWidth: 2,
@@ -625,14 +673,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 },
                 scales: {
-                    x: {
-                        title: { display: true, text: 'Années' }
-                    },
+                    x: { title: { display: true, text: 'Années' } },
                     y: {
                         title: { display: true, text: `Valeur (${currencySymbol})` },
-                        ticks: {
-                            callback: function(value) { return formatCurrency(value, false); }
-                        }
+                        ticks: { callback: function(value) { return formatCurrency(value, false); } }
                     }
                 }
             }
