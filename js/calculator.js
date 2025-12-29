@@ -423,30 +423,89 @@ document.addEventListener("DOMContentLoaded", function() {
     // =============================================
     // CRÉATION DES GRAPHIQUES
     // =============================================
-    function createChart(yearlyData) {
-        if (chart) {
-            chart.destroy();
+   function createObjectiveChart(initialAmount, payment, contributionFrequency, annualRate, compoundFrequency, years, targetAmount) {
+        if (chartObjective) {
+            chartObjective.destroy();
         }
         
-        const years = yearlyData.map(data => data.year);
-        const balances = yearlyData.map(data => data.balance);
-        const contributions = yearlyData.map(data => data.contributions);
-        const interests = yearlyData.map(data => data.interest);
+        // Générer les données année par année
+        const yearlyData = [{ year: 0, balance: initialAmount, contributions: initialAmount, interest: 0 }];
+        
+        // On normalise tout sur la fréquence de capitalisation (souvent mensuelle)
+        const periodsPerYear = compoundFrequency;
+        const ratePerPeriod = annualRate / periodsPerYear;
+        
+        // Fréquence des versements par rapport à la capitalisation
+        // Ex: Capitalisation 12 (Mensuel), Versement 1 (Annuel) => ratio 12
+        const periodsBetweenContributions = periodsPerYear / contributionFrequency;
+        
+        let balance = initialAmount;
+        let totalContributions = initialAmount;
+        
+        // Boucle sur toutes les années
+        for (let year = 1; year <= years; year++) {
+            
+            // Boucle sur les périodes de capitalisation de l'année (ex: 1 à 12)
+            for (let p = 1; p <= periodsPerYear; p++) {
+                // Compteur global de périodes n'est pas strictement nécessaire ici, 
+                // on gère la logique intra-annuelle.
+
+                // --- 1. INTÉRÊTS (D'abord, sur l'argent déjà là) ---
+                balance *= (1 + ratePerPeriod);
+
+                // --- 2. VERSEMENT (Ensuite, Fin de période) ---
+                // On doit déterminer si c'est le moment de verser.
+                // Logique Fin de Période : Si ratio est 1 (mensuel), on verse à p=1, p=2...
+                // Si ratio est 3 (trimestriel), on verse à p=3, p=6, p=9, p=12
+                
+                // Cas standard: Le versement est moins fréquent ou égal à la capitalisation
+                if (periodsBetweenContributions >= 1) {
+                    // On utilise Math.round pour éviter les erreurs de float (ex: 2.99999)
+                    // Si p est un multiple de l'intervalle, on verse.
+                    if (p % Math.round(periodsBetweenContributions) === 0) {
+                        balance += payment;
+                        totalContributions += payment;
+                    }
+                } 
+                // Cas rare: On verse plus souvent qu'on ne capitalise (ex: hebdo sur mensuel)
+                else {
+                    // On lisse le versement sur chaque période de capitalisation
+                    const contributionsPerCompoundPeriod = 1 / periodsBetweenContributions; // ex: 4 versements par période
+                    const amountThisPeriod = payment * contributionsPerCompoundPeriod;
+                    balance += amountThisPeriod;
+                    totalContributions += amountThisPeriod;
+                }
+            }
+            
+            // Sauvegarde Fin d'année
+            yearlyData.push({
+                year: year,
+                balance: balance,
+                contributions: totalContributions,
+                interest: balance - totalContributions
+            });
+        }
+        
+        const yearsLabels = yearlyData.map(data => data.year);
+        const balancesData = yearlyData.map(data => data.balance);
+        const contributionsData = yearlyData.map(data => data.contributions);
+        // Ligne cible constante
+        const targetLine = yearlyData.map(() => targetAmount);
         
         const canvas = document.createElement('canvas');
-        chartContainer.innerHTML = '';
-        chartContainer.appendChild(canvas);
+        chartObjectiveContainer.innerHTML = '';
+        chartObjectiveContainer.appendChild(canvas);
         
         const currencySymbol = currencies[activeCurrency].symbol;
         
-        chart = new Chart(canvas, {
+        chartObjective = new Chart(canvas, {
             type: 'line',
             data: {
-                labels: years,
+                labels: yearsLabels,
                 datasets: [
                     {
-                        label: 'Valeur totale',
-                        data: balances,
+                        label: 'Projection',
+                        data: balancesData, // Renommé pour clarté
                         backgroundColor: 'rgba(52, 152, 219, 0.2)',
                         borderColor: 'rgba(52, 152, 219, 1)',
                         borderWidth: 2,
@@ -454,19 +513,20 @@ document.addEventListener("DOMContentLoaded", function() {
                     },
                     {
                         label: 'Montants investis',
-                        data: contributions,
+                        data: contributionsData, // Renommé pour clarté
                         backgroundColor: 'rgba(46, 204, 113, 0.2)',
                         borderColor: 'rgba(46, 204, 113, 1)',
                         borderWidth: 2,
                         fill: true
                     },
                     {
-                        label: 'Intérêts cumulés',
-                        data: interests,
-                        backgroundColor: 'rgba(155, 89, 182, 0.2)',
-                        borderColor: 'rgba(155, 89, 182, 1)',
+                        label: 'Objectif',
+                        data: targetLine,
+                        borderColor: 'rgba(231, 76, 60, 1)',
                         borderWidth: 2,
-                        fill: true
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
                     }
                 ]
             },
@@ -484,20 +544,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 },
                 scales: {
                     x: {
-                        title: {
-                            display: true,
-                            text: 'Années'
-                        }
+                        title: { display: true, text: 'Années' }
                     },
                     y: {
-                        title: {
-                            display: true,
-                            text: `Valeur (${currencySymbol})`
-                        },
+                        title: { display: true, text: `Valeur (${currencySymbol})` },
                         ticks: {
-                            callback: function(value) {
-                                return formatCurrency(value, false);
-                            }
+                            callback: function(value) { return formatCurrency(value, false); }
                         }
                     }
                 }
