@@ -28,6 +28,35 @@
             text-align: center;
             margin-bottom: 30px;
         }
+
+        /* Language Switcher */
+        .lang-switcher {
+            display: flex;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+
+        .lang-btn {
+            padding: 6px 14px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            background-color: #eaf2f8;
+        }
+
+        .lang-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
         
         /* Onglets */
         .tabs {
@@ -112,7 +141,6 @@
             font-size: 16px;
         }
         
-        /* Groupe versement avec fréquence */
         .contribution-group {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -268,7 +296,6 @@
             margin-top: 5px;
         }
         
-        /* Info box */
         .info-box {
             background-color: #e8f6f3;
             border-left: 4px solid #1abc9c;
@@ -283,7 +310,6 @@
             color: #16a085;
         }
         
-        /* Résultats détaillés pour l'onglet objectif */
         .result-breakdown {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -312,64 +338,70 @@
 </head>
 <body>
     <div class="calculator">
-        <h1>Calculateur d'Intérêts Composés</h1>
+        <!-- Language Switcher -->
+        <div class="lang-switcher">
+            <button class="lang-btn active" data-lang="fr">FR</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+
+        <h1 data-i18n="title">Calculateur d'Intérêts Composés</h1>
         
         <!-- Onglets -->
         <div class="tabs">
-            <button class="tab-btn active" data-tab="simulator">📈 Simulateur</button>
-            <button class="tab-btn" data-tab="objective">🎯 Objectif</button>
+            <button class="tab-btn active" data-tab="simulator" data-i18n="tab_simulator">📈 Simulateur</button>
+            <button class="tab-btn" data-tab="objective" data-i18n="tab_objective">🎯 Objectif</button>
         </div>
         
-        <!-- Sélection de devise commune -->
+        <!-- Sélection de devise -->
         <div class="currency-group">
-            <h3>Sélectionner votre devise</h3>
+            <h3 data-i18n="select_currency">Sélectionner votre devise</h3>
             <div class="form-group">
                 <select id="currency">
-                    <optgroup label="Devises principales">
-                        <option value="EUR" selected>Euro (€)</option>
-                        <option value="USD">Dollar américain ($)</option>
-                        <option value="GBP">Livre sterling (£)</option>
-                        <option value="JPY">Yen japonais (¥)</option>
-                        <option value="CHF">Franc suisse (CHF)</option>
-                        <option value="CAD">Dollar canadien (CAD)</option>
-                        <option value="AUD">Dollar australien (AUD)</option>
+                    <optgroup data-i18n-label="currency_main" label="Devises principales">
+                        <option value="EUR" selected data-i18n="cur_EUR">Euro (€)</option>
+                        <option value="USD" data-i18n="cur_USD">Dollar américain ($)</option>
+                        <option value="GBP" data-i18n="cur_GBP">Livre sterling (£)</option>
+                        <option value="JPY" data-i18n="cur_JPY">Yen japonais (¥)</option>
+                        <option value="CHF" data-i18n="cur_CHF">Franc suisse (CHF)</option>
+                        <option value="CAD" data-i18n="cur_CAD">Dollar canadien (CAD)</option>
+                        <option value="AUD" data-i18n="cur_AUD">Dollar australien (AUD)</option>
                     </optgroup>
-                    <optgroup label="Devises africaines">
-                        <option value="XOF">Franc CFA - UEMOA (FCFA)</option>
-                        <option value="XAF">Franc CFA - CEMAC (FCFA)</option>
-                        <option value="ZAR">Rand sud-africain (ZAR)</option>
-                        <option value="NGN">Naira nigérian (₦)</option>
-                        <option value="EGP">Livre égyptienne (E£)</option>
-                        <option value="GHS">Cedi ghanéen (GH₵)</option>
-                        <option value="KES">Shilling kényan (KSh)</option>
-                        <option value="MAD">Dirham marocain (MAD)</option>
-                        <option value="DZD">Dinar algérien (DZD)</option>
-                        <option value="TND">Dinar tunisien (TND)</option>
-                        <option value="MUR">Roupie mauricienne (Rs)</option>
-                        <option value="CVE">Escudo cap-verdien (CVE)</option>
-                        <option value="GMD">Dalasi gambien (GMD)</option>
-                        <option value="GNF">Franc guinéen (GNF)</option>
-                        <option value="SLL">Leone sierra-léonais (SLL)</option>
-                        <option value="LRD">Dollar libérien (LRD)</option>
-                        <option value="ETB">Birr éthiopien (ETB)</option>
-                        <option value="DJF">Franc djiboutien (DJF)</option>
-                        <option value="SOS">Shilling somalien (SOS)</option>
-                        <option value="UGX">Shilling ougandais (UGX)</option>
-                        <option value="TZS">Shilling tanzanien (TZS)</option>
-                        <option value="RWF">Franc rwandais (RWF)</option>
-                        <option value="BIF">Franc burundais (BIF)</option>
-                        <option value="MGA">Ariary malgache (MGA)</option>
-                        <option value="MZN">Metical mozambicain (MZN)</option>
-                        <option value="ZMW">Kwacha zambien (ZMW)</option>
-                        <option value="BWP">Pula botswanais (BWP)</option>
-                        <option value="NAD">Dollar namibien (NAD)</option>
-                        <option value="SZL">Lilangeni swazi (SZL)</option>
-                        <option value="LSL">Loti lesothan (LSL)</option>
-                        <option value="SCR">Roupie seychelloise (SCR)</option>
-                        <option value="SDG">Livre soudanaise (SDG)</option>
-                        <option value="SSP">Livre sud-soudanaise (SSP)</option>
-                        <option value="AOA">Kwanza angolais (AOA)</option>
-                        <option value="CDF">Franc congolais (CDF)</option>
+                    <optgroup data-i18n-label="currency_african" label="Devises africaines">
+                        <option value="XOF" data-i18n="cur_XOF">Franc CFA - UEMOA (FCFA)</option>
+                        <option value="XAF" data-i18n="cur_XAF">Franc CFA - CEMAC (FCFA)</option>
+                        <option value="ZAR" data-i18n="cur_ZAR">Rand sud-africain (ZAR)</option>
+                        <option value="NGN" data-i18n="cur_NGN">Naira nigérian (₦)</option>
+                        <option value="EGP" data-i18n="cur_EGP">Livre égyptienne (E£)</option>
+                        <option value="GHS" data-i18n="cur_GHS">Cedi ghanéen (GH₵)</option>
+                        <option value="KES" data-i18n="cur_KES">Shilling kényan (KSh)</option>
+                        <option value="MAD" data-i18n="cur_MAD">Dirham marocain (MAD)</option>
+                        <option value="DZD" data-i18n="cur_DZD">Dinar algérien (DZD)</option>
+                        <option value="TND" data-i18n="cur_TND">Dinar tunisien (TND)</option>
+                        <option value="MUR" data-i18n="cur_MUR">Roupie mauricienne (Rs)</option>
+                        <option value="CVE" data-i18n="cur_CVE">Escudo cap-verdien (CVE)</option>
+                        <option value="GMD" data-i18n="cur_GMD">Dalasi gambien (GMD)</option>
+                        <option value="GNF" data-i18n="cur_GNF">Franc guinéen (GNF)</option>
+                        <option value="SLL" data-i18n="cur_SLL">Leone sierra-léonais (SLL)</option>
+                        <option value="LRD" data-i18n="cur_LRD">Dollar libérien (LRD)</option>
+                        <option value="ETB" data-i18n="cur_ETB">Birr éthiopien (ETB)</option>
+                        <option value="DJF" data-i18n="cur_DJF">Franc djiboutien (DJF)</option>
+                        <option value="SOS" data-i18n="cur_SOS">Shilling somalien (SOS)</option>
+                        <option value="UGX" data-i18n="cur_UGX">Shilling ougandais (UGX)</option>
+                        <option value="TZS" data-i18n="cur_TZS">Shilling tanzanien (TZS)</option>
+                        <option value="RWF" data-i18n="cur_RWF">Franc rwandais (RWF)</option>
+                        <option value="BIF" data-i18n="cur_BIF">Franc burundais (BIF)</option>
+                        <option value="MGA" data-i18n="cur_MGA">Ariary malgache (MGA)</option>
+                        <option value="MZN" data-i18n="cur_MZN">Metical mozambicain (MZN)</option>
+                        <option value="ZMW" data-i18n="cur_ZMW">Kwacha zambien (ZMW)</option>
+                        <option value="BWP" data-i18n="cur_BWP">Pula botswanais (BWP)</option>
+                        <option value="NAD" data-i18n="cur_NAD">Dollar namibien (NAD)</option>
+                        <option value="SZL" data-i18n="cur_SZL">Lilangeni swazi (SZL)</option>
+                        <option value="LSL" data-i18n="cur_LSL">Loti lesothan (LSL)</option>
+                        <option value="SCR" data-i18n="cur_SCR">Roupie seychelloise (SCR)</option>
+                        <option value="SDG" data-i18n="cur_SDG">Livre soudanaise (SDG)</option>
+                        <option value="SSP" data-i18n="cur_SSP">Livre sud-soudanaise (SSP)</option>
+                        <option value="AOA" data-i18n="cur_AOA">Kwanza angolais (AOA)</option>
+                        <option value="CDF" data-i18n="cur_CDF">Franc congolais (CDF)</option>
                     </optgroup>
                 </select>
             </div>
@@ -378,7 +410,7 @@
         <!-- Onglet Simulateur -->
         <div id="simulator" class="tab-content active">
             <div class="form-group">
-                <label for="initialAmount">Capital initial</label>
+                <label for="initialAmount" data-i18n="initial_capital">Capital initial</label>
                 <div class="input-group">
                     <input type="number" id="initialAmount" min="0" value="1000">
                     <span id="initialAmountCurrencySymbol" class="currency-symbol">€</span>
@@ -387,106 +419,104 @@
             
             <div class="contribution-group">
                 <div class="form-group">
-                    <label for="contributionAmount">Montant du versement</label>
+                    <label for="contributionAmount" data-i18n="contribution_amount">Montant du versement</label>
                     <div class="input-group">
                         <input type="number" id="contributionAmount" min="0" value="100">
                         <span id="contributionAmountCurrencySymbol" class="currency-symbol">€</span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="contributionFrequency">Fréquence</label>
+                    <label for="contributionFrequency" data-i18n="frequency">Fréquence</label>
                     <select id="contributionFrequency">
-                        <option value="12" selected>Mensuel</option>
-                        <option value="4">Trimestriel</option>
-                        <option value="2">Semestriel</option>
-                        <option value="1">Annuel</option>
+                        <option value="12" selected data-i18n="freq_monthly">Mensuel</option>
+                        <option value="4" data-i18n="freq_quarterly">Trimestriel</option>
+                        <option value="2" data-i18n="freq_semiannual">Semestriel</option>
+                        <option value="1" data-i18n="freq_annual">Annuel</option>
                     </select>
                 </div>
             </div>
             <p class="frequency-label" id="frequencyDescription">Soit 1 200 € par an</p>
             
             <div class="form-group">
-                <label for="annualInterestRate">Taux d'intérêt annuel (%)</label>
+                <label for="annualInterestRate" data-i18n="annual_rate">Taux d'intérêt annuel (%)</label>
                 <input type="number" id="annualInterestRate" min="0" step="0.1" value="5">
             </div>
             
             <div class="form-group">
-                <label for="investmentPeriod">Durée d'investissement (années)</label>
+                <label for="investmentPeriod" data-i18n="investment_period">Durée d'investissement (années)</label>
                 <input type="number" id="investmentPeriod" min="1" max="50" value="20">
             </div>
             
-            <button id="toggleAdvanced">Options avancées ⤵</button>
+            <button id="toggleAdvanced" data-i18n="advanced_options_down">Options avancées ⤵</button>
             
             <div id="advancedOptions">
                 <div class="form-group">
-                    <label for="annualContributionIncrease">Augmentation annuelle des versements (%)</label>
+                    <label for="annualContributionIncrease" data-i18n="annual_increase">Augmentation annuelle des versements (%)</label>
                     <input type="number" id="annualContributionIncrease" min="0" step="0.1" value="0">
                 </div>
                 
                 <div class="form-group">
-                    <label for="compoundFrequency">Fréquence de capitalisation des intérêts</label>
+                    <label for="compoundFrequency" data-i18n="compound_frequency">Fréquence de capitalisation des intérêts</label>
                     <select id="compoundFrequency">
-                        <option value="12" selected>Mensuelle</option>
-                        <option value="4">Trimestrielle</option>
-                        <option value="2">Semestrielle</option>
-                        <option value="1">Annuelle</option>
-                        <option value="365">Journalière</option>
+                        <option value="12" selected data-i18n="compound_monthly">Mensuelle</option>
+                        <option value="4" data-i18n="compound_quarterly">Trimestrielle</option>
+                        <option value="2" data-i18n="compound_semiannual">Semestrielle</option>
+                        <option value="1" data-i18n="compound_annual">Annuelle</option>
+                        <option value="365" data-i18n="compound_daily">Journalière</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="taxRate">Taux d'imposition sur les plus-values (%)</label>
+                    <label for="taxRate" data-i18n="tax_rate">Taux d'imposition sur les plus-values (%)</label>
                     <input type="number" id="taxRate" min="0" max="100" step="0.1" value="30">
                 </div>
             </div>
             
             <div class="button-group">
-                <button id="calculate">Calculer</button>
-                <button id="reset" class="reset">Réinitialiser</button>
+                <button id="calculate" data-i18n="calculate">Calculer</button>
+                <button id="reset" class="reset" data-i18n="reset">Réinitialiser</button>
             </div>
             
             <div class="results" id="results" style="display: none;">
-                <h2>Résultats</h2>
+                <h2 data-i18n="results_title">Résultats</h2>
                 
                 <div class="result-item">
-                    <div>Montant total investi</div>
+                    <div data-i18n="total_invested">Montant total investi</div>
                     <div class="result-value" id="totalInvested">0 €</div>
                 </div>
                 
                 <div class="result-item">
-                    <div>Intérêts gagnés</div>
+                    <div data-i18n="interest_earned">Intérêts gagnés</div>
                     <div class="result-value" id="interestEarned">0 €</div>
                 </div>
                 
                 <div class="result-item">
-                    <div>Valeur finale brute</div>
+                    <div data-i18n="gross_final">Valeur finale brute</div>
                     <div class="result-value" id="finalValue">0 €</div>
                 </div>
                 
                 <div class="result-item">
-                    <div>Valeur finale après impôts</div>
+                    <div data-i18n="after_tax">Valeur finale après impôts</div>
                     <div class="result-value" id="afterTaxValue">0 €</div>
                 </div>
                 
                 <div class="result-item">
-                    <div>📊 Rendement global</div>
+                    <div data-i18n="global_return">📊 Rendement global</div>
                     <div class="result-value highlight" id="globalReturn">0 %</div>
                 </div>
             </div>
             
-            <div class="chart-container" id="chart">
-                <!-- Le graphique sera inséré ici -->
-            </div>
+            <div class="chart-container" id="chart"></div>
         </div>
         
         <!-- Onglet Objectif -->
         <div id="objective" class="tab-content">
             <div class="info-box">
-                <p>💡 Définissez votre objectif financier et découvrez combien vous devez investir régulièrement pour l'atteindre.</p>
+                <p data-i18n="objective_info">💡 Définissez votre objectif financier et découvrez combien vous devez investir régulièrement pour l'atteindre.</p>
             </div>
             
             <div class="form-group">
-                <label for="targetAmount">Montant cible à atteindre</label>
+                <label for="targetAmount" data-i18n="target_amount">Montant cible à atteindre</label>
                 <div class="input-group">
                     <input type="number" id="targetAmount" min="0" value="100000">
                     <span id="targetAmountCurrencySymbol" class="currency-symbol">€</span>
@@ -494,7 +524,7 @@
             </div>
             
             <div class="form-group">
-                <label for="initialAmount2">Capital initial (optionnel)</label>
+                <label for="initialAmount2" data-i18n="initial_capital_optional">Capital initial (optionnel)</label>
                 <div class="input-group">
                     <input type="number" id="initialAmount2" min="0" value="0">
                     <span id="initialAmount2CurrencySymbol" class="currency-symbol">€</span>
@@ -502,80 +532,79 @@
             </div>
             
             <div class="form-group">
-                <label for="targetYears">Nombre d'années pour atteindre l'objectif</label>
+                <label for="targetYears" data-i18n="target_years">Nombre d'années pour atteindre l'objectif</label>
                 <input type="number" id="targetYears" min="1" max="50" value="20">
             </div>
             
             <div class="form-group">
-                <label for="targetInterestRate">Taux d'intérêt annuel estimé (%)</label>
+                <label for="targetInterestRate" data-i18n="estimated_rate">Taux d'intérêt annuel estimé (%)</label>
                 <input type="number" id="targetInterestRate" min="0" step="0.1" value="5">
             </div>
             
-            <button id="toggleAdvanced2">Options avancées ⤵</button>
+            <button id="toggleAdvanced2" data-i18n="advanced_options_down">Options avancées ⤵</button>
             
             <div id="advancedOptions2">
                 <div class="form-group">
-                    <label for="compoundFrequency2">Fréquence de capitalisation des intérêts</label>
+                    <label for="compoundFrequency2" data-i18n="compound_frequency">Fréquence de capitalisation des intérêts</label>
                     <select id="compoundFrequency2">
-                        <option value="12" selected>Mensuelle</option>
-                        <option value="4">Trimestrielle</option>
-                        <option value="2">Semestrielle</option>
-                        <option value="1">Annuelle</option>
-                        <option value="365">Journalière</option>
+                        <option value="12" selected data-i18n="compound_monthly">Mensuelle</option>
+                        <option value="4" data-i18n="compound_quarterly">Trimestrielle</option>
+                        <option value="2" data-i18n="compound_semiannual">Semestrielle</option>
+                        <option value="1" data-i18n="compound_annual">Annuelle</option>
+                        <option value="365" data-i18n="compound_daily">Journalière</option>
                     </select>
                 </div>
             </div>
             
             <div class="button-group">
-                <button id="calculateObjective">Calculer les versements</button>
-                <button id="resetObjective" class="reset">Réinitialiser</button>
+                <button id="calculateObjective" data-i18n="calculate_contributions">Calculer les versements</button>
+                <button id="resetObjective" class="reset" data-i18n="reset">Réinitialiser</button>
             </div>
             
             <div class="results" id="resultsObjective" style="display: none;">
-                <h2>Versements nécessaires</h2>
+                <h2 data-i18n="required_contributions">Versements nécessaires</h2>
                 
                 <div class="result-breakdown">
                     <div class="breakdown-item">
-                        <div class="breakdown-label">Mensuel</div>
+                        <div class="breakdown-label" data-i18n="monthly">Mensuel</div>
                         <div class="breakdown-value" id="monthlyRequired">0 €</div>
                     </div>
                     <div class="breakdown-item">
-                        <div class="breakdown-label">Trimestriel</div>
+                        <div class="breakdown-label" data-i18n="quarterly">Trimestriel</div>
                         <div class="breakdown-value" id="quarterlyRequired">0 €</div>
                     </div>
                     <div class="breakdown-item">
-                        <div class="breakdown-label">Semestriel</div>
+                        <div class="breakdown-label" data-i18n="semiannual">Semestriel</div>
                         <div class="breakdown-value" id="semiAnnualRequired">0 €</div>
                     </div>
                     <div class="breakdown-item">
-                        <div class="breakdown-label">Annuel</div>
+                        <div class="breakdown-label" data-i18n="annual">Annuel</div>
                         <div class="breakdown-value" id="annualRequired">0 €</div>
                     </div>
                 </div>
                 
                 <div class="result-item" style="margin-top: 20px;">
-                    <div>Total à investir (versements mensuels)</div>
+                    <div data-i18n="total_to_invest_monthly">Total à investir (versements mensuels)</div>
                     <div class="result-value" id="totalToInvest">0 €</div>
                 </div>
                 
                 <div class="result-item">
-                    <div>Intérêts générés</div>
+                    <div data-i18n="interest_generated">Intérêts générés</div>
                     <div class="result-value" id="interestGenerated">0 €</div>
                 </div>
                 
                 <div class="result-item">
-                    <div>📊 Rendement global</div>
+                    <div data-i18n="global_return">📊 Rendement global</div>
                     <div class="result-value highlight" id="globalReturnObjective">0 %</div>
                 </div>
             </div>
             
-            <div class="chart-container" id="chartObjective">
-                <!-- Le graphique sera inséré ici -->
-            </div>
+            <div class="chart-container" id="chartObjective"></div>
         </div>
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/calculator.js"></script>
 </body>
 </html>
